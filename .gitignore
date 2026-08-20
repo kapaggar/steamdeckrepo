@@ -1,0 +1,48 @@
+# Secrets and credentials
+auth.json
+**/auth.json
+.env
+.env.*
+credentials.json
+*.sudoers
+sudoers
+**/sudoers.d/
+
+# API keys / CLI auth state (never vendor ~/.grok)
+.grok/
+**/.grok/
+**/*api*key*
+**/*token*.json
+
+# SSH material
+id_rsa
+id_ed25519
+id_ecdsa
+id_dsa
+*.pem
+*.key
+authorized_keys
+known_hosts
+
+# Models and large binaries
+.ollama/
+**/.ollama/
+models/
+*.gguf
+*.bin
+*.safetensors
+
+# Quarantine / host ELF drops (bonsAI tarball leftovers)
+*.elf
+*.AppImage
+
+# Downloaded installers (fetch on the Deck, do not commit)
+install_release.sh
+decky-installer*
+
+# Deck-only runtime markers
+ollama-managed-by-distrobox
+
+# OS junk
+.DS_Store
+*~
