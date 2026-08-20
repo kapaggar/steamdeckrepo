@@ -5,6 +5,8 @@ This repo is **not** DIPI Staff Android — it only holds Deck helpers, bootstra
 
 Canonical tree is this repository. On the Mac, `~/.config/steamdeck/*` are symlinks into `helpers/` so existing `source ~/.config/steamdeck/steamdeck.bash` keeps working.
 
+Owner-facing operator manual (stock SteamOS vs everything added, inventory, AI stack, daily ops, recovery): [docs/MANUAL.md](docs/MANUAL.md). Architecture notes stay in [docs/architecture.md](docs/architecture.md).
+
 ## Layout
 
 ```
