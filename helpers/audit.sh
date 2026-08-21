@@ -205,6 +205,18 @@ else
 fi
 
 echo
+echo "── Protontricks (user Flatpak) ──"
+if command -v flatpak >/dev/null 2>&1 && flatpak --user info com.github.Matoking.protontricks >/dev/null 2>&1; then
+  _pass "protontricks Flatpak $(flatpak --user info com.github.Matoking.protontricks 2>/dev/null | awk -F': *' '/^[[:space:]]*Version:/{print $2; exit}')"
+else
+  _warn "protontricks Flatpak missing (run: bash ~/.config/steamdeck/install-protontricks.sh)"
+fi
+[[ -x "${H}/.local/bin/protontricks" ]] && _pass "protontricks wrapper (~/.local/bin)" \
+  || _warn "missing ~/.local/bin/protontricks"
+[[ -x "${H}/.config/steamdeck/install-protontricks.sh" ]] && _pass "install-protontricks.sh" \
+  || _warn "missing install-protontricks.sh"
+
+echo
 echo "── Shell helpers ──"
 [[ -f "${H}/.config/steamdeck/deck-remote.bashrc" ]] && _pass "deck-remote.bashrc" || _fail "deck-remote.bashrc"
 [[ -f "${H}/.config/steamdeck/deck-help.bash" ]] && _pass "deck-help.bash" || _fail "deck-help.bash"

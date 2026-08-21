@@ -21,6 +21,7 @@ helpers/                 Mac + Deck scripts
   ai-focus.sh            START: ollama.service, wait for :11434, then WebUI
   install-decky.sh       Finish Decky Loader after SteamOS updates
   install-chrome-open-webui.sh  Chrome bookmark + new-tab button for WebUI
+  install-protontricks.sh  user Flatpak Protontricks + optional vcrun verbs
   chrome-open-webui-newtab/     unpacked MV3 extension source
 plugins/deck-focus/      Decky QAM plugin (Game focus / AI focus)
 docs/architecture.md     $HOME-first, Distrobox, Ollama, Decky, Open WebUI

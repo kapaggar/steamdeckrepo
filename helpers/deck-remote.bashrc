@@ -180,6 +180,16 @@ deck() {
     games)
       games
       ;;
+    protontricks|winetricks)
+      shift
+      export PATH="${HOME}/.local/bin:/usr/bin:/bin:${PATH}"
+      if [[ "${1:-}" == install || "${1:-}" == --install ]]; then
+        shift
+        bash "${HOME}/.config/steamdeck/install-protontricks.sh" "$@"
+      else
+        command protontricks "$@"
+      fi
+      ;;
     usage)
       deckusage
       ;;

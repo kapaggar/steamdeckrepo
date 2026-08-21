@@ -2,7 +2,7 @@
 
 Owner guide for **सत्यBrave**. This is the single document for everything added on top of a **stock SteamOS** image on this Deck.
 
-**Last verified:** 2026-08-20 19:40 PDT, live SSH to `deck@10.0.0.143` (`audit.sh` + inventory). Hardware is **Galileo** (OLED). SteamOS **3.8.16** (`BUILD_ID=20260716.1`, branch `stable`, `steamos-readonly` **enabled**).
+**Last verified:** 2026-08-20 23:10 PDT, live SSH to `deck@10.0.0.143` (`audit.sh` + inventory + Protontricks Flatpak). Hardware is **Galileo** (OLED). SteamOS **3.8.16** (`BUILD_ID=20260716.1`, branch `stable`, `steamos-readonly` **enabled**).
 
 Related short notes: [architecture.md](architecture.md) (layout only) and the [repo README](../README.md) (Mac helpers). This manual is the operator book.
 
@@ -65,6 +65,7 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 | Steam RetroArch | `~/.steam/steam/steamapps/common/RetroArch` | yes | Steam library (stock-style install) |
 | Flatpak RetroArch | `org.libretro.RetroArch` (user, 1.22.2) | yes | EmuDeck / Discover — **not** the Steam one |
 | Gyro DSU | `~/sdgyrodsu/` + user `sdgyrodsu.service` | yes | `systemctl --user start\|stop sdgyrodsu`; Desktop update/uninstall helpers |
+| Protontricks | user Flatpak `com.github.Matoking.protontricks` 1.14.1 + `~/.local/bin/protontricks` | yes | `protontricks -l` / `bash ~/.config/steamdeck/install-protontricks.sh` |
 | Passwordless sudo | `/etc/sudoers.d/zz-deck-nopasswd` | **re-check** | must sort **after** `wheel` |
 | SSH | `sshd` enabled; Mac key login | image + `$HOME/.ssh` | `sudo systemctl start\|stop sshd` |
 | Desktop shortcuts | `~/Desktop/` + `~/.local/share/applications/` | yes | see §6 |
@@ -149,6 +150,7 @@ deck bootstrap --with-ai
 deck box-ai            # distrobox enter ai-box
 deck df                # disk + library sizes
 deck games             # steamapps/common folder names
+deck protontricks …    # Protontricks on the Deck (Flatpak wrapper)
 ```
 
 ### Copy files
@@ -346,7 +348,47 @@ Typical owner workflow:
 
 ---
 
-## 8. Persistence rules and what gets wiped
+## 8. Windows redistributables (Protontricks)
+
+Windows titles on SteamOS run under **Proton**. Valve’s layer already includes **DXVK** (Direct3D) and a `d3dcompiler`. You almost never need Microsoft’s DirectX web installer (`dxwebsetup.exe`). What *does* sometimes go missing is a **Visual C++** runtime inside that game’s Wine prefix.
+
+**Do not** copy a Windows dump / `_CommonRedist` / `setup.exe` / Steam-emulator DLLs onto the Deck. A real Steam library export is `steamapps/common/<Game>/` plus `steamapps/appmanifest_<appid>.acf`. Push that with `deckpushgame` from a Mac Steam library, then on the Deck tap **Install** (Steam verifies existing files). Loose folders without an acf are not imports. Then, if a prefix is missing a runtime, apply the matching **winetricks** verb with Protontricks.
+
+Protontricks is the **user Flatpak** `com.github.Matoking.protontricks` (Discover / Flathub — official install path for Steam Deck). That lives under `$HOME` and does **not** need `steamos-readonly disable`. Wrappers: `~/.local/bin/protontricks` and `protontricks-launch`. Reinstall/repair:
+
+```bash
+bash ~/.config/steamdeck/install-protontricks.sh
+```
+
+A Windows `_CommonRedist` folder (names only — do not run those EXEs on the Deck) maps like this:
+
+| File | What it is | Verb / action |
+| --- | --- | --- |
+| `vcredist_2015-2019_x64.exe` / `_x86.exe` | Visual C++ 2015–2019 | `vcrun2019` (or `vcrun2022`, a superset — **pick one**) |
+| `vcredist_x64.exe` / `vcredist_x86.exe` | Visual C++ 2010 | `vcrun2010` only if that title actually needs it |
+| `dxwebsetup.exe` | DirectX End-User Runtime web installer | **Skip** — Proton already ships DXVK / d3dcompiler |
+| `dotNetFx40_Full_setup.exe` | .NET Framework 4.0 | `dotnet40` only if a prefix is missing it |
+| `xnafx40_redist.msi` | XNA Framework 4.0 | `xna40` — original Overcooked, not typically AYCE |
+| `oalinst.exe` | OpenAL | `openal` only if the game asks |
+
+**Overcooked! All You Can Eat** Steam appid is **1243830**. Not in this Deck’s library and not in the Mac Steam library (`~/Library/Application Support/Steam/steamapps`). After Steam has the title (Install + one launch, which creates `compatdata/1243830`), apply VC++ 2015–2019:
+
+```bash
+# quiet / non-interactive; can take several minutes
+protontricks -q 1243830 vcrun2019
+
+# equivalent
+protontricks -c "winetricks -q vcrun2019" 1243830
+
+# same via helper
+bash ~/.config/steamdeck/install-protontricks.sh --apply 1243830
+```
+
+From the Mac: `deck protontricks -q 1243830 vcrun2019`. Extra library on an SD card needs a Flatpak filesystem override (see the [Flathub Protontricks page](https://github.com/flathub/com.github.Matoking.protontricks)).
+
+---
+
+## 9. Persistence rules and what gets wiped
 
 | Layer | Fate | Examples |
 | --- | --- | --- |
@@ -368,7 +410,7 @@ Typical owner workflow:
 
 ---
 
-## 9. Daily ops
+## 10. Daily ops
 
 ### Start the AI stack (Desktop or SSH)
 
@@ -409,7 +451,7 @@ deck ai
 
 Expect: linger yes, `ollama.service` active, API on `127.0.0.1:11434`, `qwen2.5:1.5b` listed, `plugin_loader` active, Open WebUI on `127.0.0.1:3000` **or** stopped if you left it off. One known-good warning today: **no `arch-tools` box** (optional).
 
-If the QAM plug is missing: restart Game Mode once. If it is still missing: §10 Decky reinstall.
+If the QAM plug is missing: restart Game Mode once. If it is still missing: §11 Decky reinstall.
 
 ### Disk
 
@@ -417,7 +459,7 @@ Internal `/home` was ~928 GiB, ~118 GiB used (13%) at last check. `deck df` 
 
 ---
 
-## 10. Recovery
+## 11. Recovery
 
 ### Re-run user-space bootstrap
 
@@ -481,7 +523,7 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 
 ---
 
-## 11. Do-not list
+## 12. Do-not list
 
 | Do not | Why |
 | --- | --- |
@@ -495,6 +537,7 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | Symlink the Deck’s `~/.config/steamdeck` at the Mac repo | SteamOS `$HOME` should keep real files. |
 | Commit secrets into this repo | No `auth.json`, sudoers copies, `~/.grok` state, keys, models, AppImages. |
 | Use piracy / SteamRIP / random “ROM packs” | Legal dumps and BIOS only (§7). |
+| Copy a Windows game dump / `_CommonRedist` / `setup.exe` onto the Deck | Sideload is not how Proton games are installed. Steam + Protontricks verbs only (§8). |
 | Leave Open WebUI up for AAA games | ~2 GiB+ and CPU; QAM **Deck Focus → Game focus** or `deck game` first. |
 
 ---
@@ -513,3 +556,4 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | Free resources for a game | `deck game` (or `deck webui stop` and `deck ollama stop`) |
 | After SteamOS update | `deck bootstrap` → Decky `install-decky.sh` → restart Game Mode → `deck audit` |
 | After editing helpers | `rsync` `helpers/` → `deck@10.0.0.143:~/.config/steamdeck/` |
+| Install Protontricks / VC++ for a Proton game | `bash ~/.config/steamdeck/install-protontricks.sh`; then `protontricks -q <appid> vcrun2019` (§8) |

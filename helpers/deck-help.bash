@@ -26,6 +26,7 @@ Usage:  deck              this page
     deckmounts             list SD / USB mounts
     deckgames | dgames     list installed game folders
     deckmanifests          list Steam app IDs
+    deck protontricks …    Protontricks on Deck (or: deck protontricks install)
 
   File transfer
     deckpush SRC [DST]     copy to Deck (default ~/Downloads)
@@ -139,6 +140,8 @@ On-Deck commands (run in Konsole on the Steam Deck)
   deckusage              paths + counts
 
   grok | agent | cursor  installed CLIs / IDE
+  protontricks           Flatpak wrapper (~/.local/bin)
+  deck protontricks install   ensure Flatpak + wrappers
 
   Architecture (survives SteamOS updates)
     deck audit             audit \$HOME-first setup
@@ -162,6 +165,7 @@ Installed tools on Deck
   grok                   ~/.grok/bin/grok
   agent                  ~/.local/bin/agent
   cursor                 ~/.local/bin/cursor  → ~/Applications/cursor/
+  protontricks           ~/.local/bin/protontricks → user Flatpak
   google-chrome          ~/.local/bin/google-chrome → Flatpak + Open WebUI new-tab
   retroarch              Steam library (steamapps/common/RetroArch)
 

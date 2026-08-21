@@ -102,6 +102,10 @@ deck() {
     games)
       deckgames
       ;;
+    protontricks|winetricks)
+      shift
+      deckprotontricks "$@"
+      ;;
     push)
       shift
       deckpush "$@"
@@ -135,6 +139,16 @@ deckmounts() {
 deckgames() {
   deckping || return 1
   _deck_ssh "ls -1 ${STEAMDECK_COMMON} 2>/dev/null | sort"
+}
+
+deckprotontricks() {
+  deckping || return 1
+  if [[ "${1:-}" == install || "${1:-}" == --install ]]; then
+    shift
+    _deck_ssh "bash ~/.config/steamdeck/install-protontricks.sh $(printf '%q ' "$@")"
+    return
+  fi
+  _deck_ssh "export PATH=\"\$HOME/.local/bin:/usr/bin:/bin:\$PATH\"; protontricks $(printf '%q ' "$@")"
 }
 
 deckmanifests() {
