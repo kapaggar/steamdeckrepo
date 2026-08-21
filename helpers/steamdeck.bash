@@ -96,6 +96,10 @@ deck() {
       shift
       deckwebui "$@"
       ;;
+    jellyfin|jf)
+      shift
+      deckjellyfin "$@"
+      ;;
     ssh|sh|shell)
       shift
       decksh "$@"
@@ -370,6 +374,25 @@ deckollama() {
       ;;
     *)
       _deck_ssh "export PATH=\"/usr/bin:/bin:\$HOME/.local/bin:\$PATH\"; ollama $(printf '%q ' "$@")"
+      ;;
+  esac
+}
+
+
+deckjellyfin() {
+  deckping || return 1
+  local sub=${1:-status}
+  case "${sub}" in
+    start|stop|restart)
+      _deck_ssh "systemctl --user ${sub} jellyfin.service && systemctl --user --no-pager -l status jellyfin.service | head -16"
+      ;;
+    logs|log)
+      shift
+      _deck_ssh "journalctl --user -u jellyfin.service -n ${1:-80} --no-pager"
+      ;;
+    *)
+      echo "Jellyfin  http://127.0.0.1:8096  and  http://10.0.0.143:8096  (first-run wizard; media ~/media)"
+      _deck_ssh "systemctl --user --no-pager -l status jellyfin.service | head -16"
       ;;
   esac
 }

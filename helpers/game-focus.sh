@@ -12,6 +12,7 @@ echo "  leaving Steam, Decky plugin_loader, Flatpak browsers, and sdgyrodsu alon
 
 systemctl --user stop open-webui.service 2>/dev/null || true
 systemctl --user stop ollama.service 2>/dev/null || true
+systemctl --user stop jellyfin.service 2>/dev/null || true
 
 # Only AI containers we created. Never a blanket podman stop --all.
 # Do not add: jellyfin*, dev, or other non-AI boxes.

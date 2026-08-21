@@ -62,6 +62,8 @@ Usage:  deck              this page
     deck ollama            same + user-unit status
     deck ollama logs       journalctl --user -u ollama.service
     deck ollama start|stop|restart
+    deck jellyfin          http://127.0.0.1:8096 and http://10.0.0.143:8096
+    deck jellyfin start|stop|restart|logs
     deck box-ai            distrobox enter ai-box
     deck dev | deck box-dev  distrobox enter dev (Ubuntu 24.04 toolchain)
     deck vscode            launch host VS Code (or: deck vscode install)
@@ -160,6 +162,7 @@ On-Deck commands (run in Konsole on the Steam Deck)
     deck ai-on                AI focus (start Ollama + Open WebUI)
     deck webui             Open WebUI http://127.0.0.1:3000
     deck ollama            ollama.service status / logs / start|stop
+    deck jellyfin          Jellyfin http://127.0.0.1:8096 / http://10.0.0.143:8096
     Do not use bonsAI Install Ollama — use the Distrobox unit
     QAM: Decky → Deck Focus
 EOF

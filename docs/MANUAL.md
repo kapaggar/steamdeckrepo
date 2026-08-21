@@ -49,6 +49,7 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 | Ollama 0.32.14 | inside `ai-box`; models `~/.ollama` | yes | `deck ollama start\|stop\|restart` or `systemctl --user … ollama.service` |
 | `~/.local/bin/ollama` | Distrobox **wrapper** (must not be a host ELF) | yes | `ollama list` / `ollama pull …` |
 | Open WebUI | Quadlet `~/.config/containers/systemd/open-webui.container`; data `~/containers/open-webui` | yes | `deck webui start\|stop\|restart` |
+| Jellyfin | Quadlet `~/.config/containers/systemd/jellyfin.container`; config `~/containers/jellyfin/config`; media `~/media` | yes | `deck jellyfin start\|stop\|restart` |
 | Podman user socket | `podman.socket` (user) | image binary; enable is user | `systemctl --user start\|stop podman.socket` |
 | User linger | `loginctl` linger for `deck` | usually yes; re-check | `sudo loginctl enable-linger deck` once |
 | Decky Loader v3.2.6 | `~/homebrew/` + **system** `plugin_loader.service` | tree yes; **unit re-check** | `sudo systemctl start\|stop plugin_loader`; after updates: `install-decky.sh` |
@@ -99,6 +100,7 @@ Override from any Mac shell: `STEAMDECK_HOST`, `STEAMDECK_USER`, `STEAMDECK_SSH`
 | `127.0.0.1:11434` | Ollama | **localhost only** — not on the LAN |
 | `127.0.0.1:3000` | Open WebUI (pasta publishes host port) | **localhost only** |
 | `127.0.0.1:1337` | Decky PluginLoader | localhost |
+| `0.0.0.0:8096` | Jellyfin | LAN first-run wizard; media `~/media` |
 | `0.0.0.0:32000` | stock SteamOS devkit | Valve, not ours |
 
 Do **not** move Ollama or Open WebUI to `0.0.0.0` to “reach them from the Mac.” Use an SSH tunnel instead:
@@ -148,6 +150,8 @@ deck ollama            # status + user unit
 deck ollama start|stop|restart|logs
 deck webui             # http://127.0.0.1:3000 + status
 deck webui start|stop|restart|logs
+deck jellyfin          # http://127.0.0.1:8096 and http://10.0.0.143:8096
+deck jellyfin start|stop|restart|logs
 deck audit             # ~/.config/steamdeck/audit.sh
 deck bootstrap         # dirs, podman.socket, Distrobox
 deck bootstrap --with-ai
@@ -233,7 +237,7 @@ ollama pull qwen2.5:1.5b
 - **Plugins running:** bonsAI, decky-ollama, **Deck Focus** (all under `~/homebrew/plugins/`).
 - **QAM:** Game Mode → … (Quick Access) → plug icon. If the icon is missing, **restart Game Mode once** (or reboot).
 - **Deck Focus:** QAM → Decky → **Deck Focus**. Two large buttons:
-  - **Game focus (stop AI)** — runs `~/.config/steamdeck/game-focus.sh` as user `deck` (not root). Stops `open-webui.service`, `ollama.service`, then our rootless Podman containers `open-webui` and `ai-box`. Does **not** stop Steam, `plugin_loader`, Flatpak Chrome/Firefox, or `sdgyrodsu`.
+  - **Game focus (stop AI)** — runs `~/.config/steamdeck/game-focus.sh` as user `deck` (not root). Stops `open-webui.service`, `ollama.service`, `jellyfin.service`, then our rootless Podman containers `open-webui` and `ai-box`. Does **not** stop Steam, `plugin_loader`, Flatpak Chrome/Firefox, or `sdgyrodsu`.
   - **AI focus (start stack)** — runs `~/.config/steamdeck/ai-focus.sh` as `deck`. Starts `ollama.service`, waits until `127.0.0.1:11434` answers, then starts `open-webui.service`.
   Same actions from the Mac: `deck game` / `deck ai-off` (stop) and `deck ai-on` (start). Plugin source lives in this repo at `plugins/deck-focus/`.
 - **bonsAI:** chat UI pointed at `http://127.0.0.1:11434`. **Never tap Install Ollama or Update installed.** That drops a host tarball in `~/.local/lib/ollama` (~2 GiB CUDA/Vulkan junk) and fights `ai-box`.
@@ -254,6 +258,10 @@ deck webui logs
 ```
 
 First WebUI visit may ask you to create a **local** admin account. That stays on the Deck in `~/containers/open-webui`. It is not in this repo.
+
+### Jellyfin
+
+Manual Quadlet (`jellyfin.service`), not the official SteamOS installer (that script is interactive). First-run wizard: [http://127.0.0.1:8096](http://127.0.0.1:8096) on the Deck or [http://10.0.0.143:8096](http://10.0.0.143:8096) on the LAN. Libraries read `~/media` (mounted read-only). Game focus stops `jellyfin.service`; AI focus does not start it.
 
 ---
 
