@@ -173,6 +173,34 @@ fi
   || _warn "missing ~/containers/open-webui"
 
 echo
+echo "── Chrome Open WebUI (new tab + bookmark) ──"
+EXT="${H}/.local/share/steamdeck/chrome-open-webui-newtab"
+[[ -f "${EXT}/manifest.json" && -f "${EXT}/newtab.html" ]] \
+  && _pass "new-tab extension ${EXT}" \
+  || _warn "missing Open WebUI new-tab extension (run: bash ~/.config/steamdeck/install-chrome-open-webui.sh)"
+[[ -x "${H}/.local/bin/google-chrome" ]] && grep -q -- '--load-extension' "${H}/.local/bin/google-chrome" 2>/dev/null \
+  && _pass "google-chrome wrapper --load-extension" \
+  || _warn "missing ~/.local/bin/google-chrome wrapper"
+if [[ -f "${H}/.local/share/applications/com.google.Chrome.desktop" ]] \
+  && grep -q -- '--load-extension' "${H}/.local/share/applications/com.google.Chrome.desktop"; then
+  _pass "user Chrome .desktop loads new-tab extension"
+else
+  _warn "app-menu Chrome .desktop missing --load-extension"
+fi
+if [[ -f "${H}/Desktop/com.google.Chrome.desktop" ]] \
+  && grep -q -- '--load-extension' "${H}/Desktop/com.google.Chrome.desktop"; then
+  _pass "Desktop Google Chrome uses our launcher"
+else
+  _warn "Desktop Chrome is the official Flatpak symlink (no new-tab button)"
+fi
+if [[ -f "${H}/.var/app/com.google.Chrome/config/google-chrome/Default/Bookmarks" ]] \
+  && grep -q '127.0.0.1:3000' "${H}/.var/app/com.google.Chrome/config/google-chrome/Default/Bookmarks"; then
+  _pass "Chrome Bookmarks bar has Open WebUI"
+else
+  _warn "Open WebUI not in Chrome Bookmarks yet (quit Chrome, re-run installer, or import Desktop HTML)"
+fi
+
+echo
 echo "── Shell helpers ──"
 [[ -f "${H}/.config/steamdeck/deck-remote.bashrc" ]] && _pass "deck-remote.bashrc" || _fail "deck-remote.bashrc"
 [[ -f "${H}/.config/steamdeck/deck-help.bash" ]] && _pass "deck-help.bash" || _fail "deck-help.bash"

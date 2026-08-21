@@ -113,5 +113,13 @@ if [[ ! -x "${H}/.grok/bin/grok" ]] && command -v curl >/dev/null; then
   curl -fsSL https://x.ai/cli/install.sh | bash 2>/dev/null || echo "grok: install failed (run manually)"
 fi
 
+# --- Chrome Open WebUI bookmark + new-tab button (Flatpak, $HOME) ---
+if [[ -x "${H}/.config/steamdeck/install-chrome-open-webui.sh" ]] \
+  && command -v flatpak >/dev/null 2>&1 \
+  && flatpak info com.google.Chrome >/dev/null 2>&1; then
+  bash "${H}/.config/steamdeck/install-chrome-open-webui.sh" || \
+    echo "chrome Open WebUI helpers: skipped (re-run after Chrome is fully quit)"
+fi
+
 echo
 echo "Persistent layout OK. Run: deck audit"

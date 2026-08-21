@@ -85,10 +85,16 @@ Usage:  deck              this page
     cursor                 Cursor IDE AppImage launcher
 
   Desktop shortcuts
-    Grok CLI, Cursor Agent, Cursor IDE, Google Chrome
+    Grok CLI, Cursor Agent, Cursor IDE, Google Chrome, Open WebUI
 
   Browser login fix
-    ~/.local/bin/xdg-open  opens http(s) in Chrome Flatpak
+    ~/.local/bin/xdg-open  opens http(s) in Chrome Flatpak (wrapper)
+
+  Chrome → Open WebUI (localhost)
+    Desktop Google Chrome (our .desktop, not the Discover symlink)
+    New tab = big Open WebUI button; bookmarks bar = Open WebUI
+    Fully quit Chrome, then relaunch from ~/Desktop
+    Re-apply: bash ~/.config/steamdeck/install-chrome-open-webui.sh
 
   Config files
     ~/.config/steamdeck/               bootstrap, audit, helpers
@@ -149,13 +155,13 @@ Installed tools on Deck
   grok                   ~/.grok/bin/grok
   agent                  ~/.local/bin/agent
   cursor                 ~/.local/bin/cursor  → ~/Applications/cursor/
-  google-chrome          flatpak run com.google.Chrome
+  google-chrome          ~/.local/bin/google-chrome → Flatpak + Open WebUI new-tab
   retroarch              Steam library (steamapps/common/RetroArch)
 
   Local AI
     ollama                 ~/.local/bin/ollama → Distrobox ai-box
     ollama.service         user systemd (OLLAMA_HOST=127.0.0.1:11434)
-    Open WebUI             http://127.0.0.1:3000  (Quadlet open-webui.service)
+    Open WebUI             http://127.0.0.1:3000  (Quadlet; Chrome new tab / bookmark)
     Decky + bonsAI         QAM chat (plugin_loader.service; restart Game Mode for QAM icon)
     Do not use bonsAI Install Ollama — use the Distrobox unit
 
@@ -173,6 +179,7 @@ Common paths on Deck (persistent under $HOME)
   ~/.local/bin/                  user CLI wrappers
   ~/.grok/                       Grok CLI
   ~/.local/share/cursor-agent/   Cursor Agent
+  ~/.local/share/steamdeck/      Chrome Open WebUI new-tab extension
   ~/.config/steamdeck/           deck helpers, bootstrap, audit
   ~/.config/systemd/user/        user systemd units
   ~/.config/containers/systemd/  Podman Quadlets (*.container)

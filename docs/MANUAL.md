@@ -2,7 +2,7 @@
 
 Owner guide for **सत्यBrave**. This is the single document for everything added on top of a **stock SteamOS** image on this Deck.
 
-**Last verified:** 2026-08-20 15:34 PDT, live SSH to `deck@10.0.0.143` (`audit.sh` + inventory). Hardware is **Galileo** (OLED). SteamOS **3.8.16** (`BUILD_ID=20260716.1`, branch `stable`, `steamos-readonly` **enabled**).
+**Last verified:** 2026-08-20 19:40 PDT, live SSH to `deck@10.0.0.143` (`audit.sh` + inventory). Hardware is **Galileo** (OLED). SteamOS **3.8.16** (`BUILD_ID=20260716.1`, branch `stable`, `steamos-readonly` **enabled**).
 
 Related short notes: [architecture.md](architecture.md) (layout only) and the [repo README](../README.md) (Mac helpers). This manual is the operator book.
 
@@ -54,7 +54,8 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 | Cursor IDE | `~/Applications/cursor/Cursor-3.16.29-x86_64.AppImage` + `~/.local/bin/cursor` | yes | Desktop **Cursor** |
 | Grok CLI | `~/.grok/bin/grok` (1.0.5) | yes | Desktop **Grok CLI**, or `grok` / `deckgrok` |
 | GitHub CLI | `~/.local/bin/gh` (2.97.0) | yes | `gh` |
-| Chrome Flatpak | `com.google.Chrome` **system** (151.x) | typically yes (`/var`) | Desktop **Google Chrome** / Discover |
+| Chrome Flatpak | `com.google.Chrome` **system** (151.x) | typically yes (`/var`) | Desktop **Google Chrome** (our launcher) |
+| Chrome Open WebUI new-tab + bookmark | `~/.local/share/steamdeck/chrome-open-webui-newtab` + `~/.local/bin/google-chrome` + user `.desktop` | yes | Fully quit Chrome, then Desktop **Google Chrome**; new tab button + bookmarks bar |
 | Firefox Flatpak | `org.mozilla.firefox` **system** (154.0) | typically yes | Discover / app menu (http(s) is **not** the default) |
 | `xdg-open` wrapper | `~/.local/bin/xdg-open` → Chrome for `http(s)` | yes | used by Cursor / login flows |
 | EmuDeck AppImage | `~/Applications/EmuDeck.AppImage` + `~/.local/bin/emudeck` | yes | Desktop **EmuDeck** |
@@ -223,7 +224,7 @@ ollama pull qwen2.5:1.5b
 ### Open WebUI
 
 - **Image:** `ghcr.io/open-webui/open-webui:main` (rootless Quadlet).
-- **Host URL:** `http://127.0.0.1:3000` (Desktop: app menu **Open WebUI**, or Chrome).
+- **Host URL:** `http://127.0.0.1:3000` (Desktop: **Open WebUI**, or Chrome new-tab / bookmarks bar).
 - **Why `10.0.2.2`:** pasta `--map-host-loopback 10.0.2.2` reaches host `127.0.0.1:11434`. `host.containers.internal` was connection-refused because Ollama is localhost-only. Do not “fix” that by binding Ollama on `0.0.0.0`.
 - **Persist:** `~/containers/open-webui`.
 - **From the Mac:** SSH tunnel (§3), not a LAN publish.
@@ -249,8 +250,8 @@ Switch to **Desktop Mode** for these. Game Mode can launch some of them via Stea
 | Grok CLI | yes | yes | Konsole → `grok` |
 | Cursor Agent | yes | yes | Konsole → `agent` |
 | Cursor | yes | yes | `~/.local/bin/cursor` (extracted AppImage, `--no-sandbox`) |
-| Google Chrome | yes (Flatpak export) | yes | `flatpak run com.google.Chrome` |
-| Open WebUI | app menu | yes | `xdg-open http://127.0.0.1:3000` |
+| Google Chrome | yes (**our** launcher, not the Discover symlink) | yes | Flatpak Chrome + `--load-extension` (Open WebUI new tab) |
+| Open WebUI | yes | yes | `~/.local/bin/google-chrome http://127.0.0.1:3000` |
 
 Also on the Desktop (stock or EmuDeck): **Return to Gaming Mode**, **Steam**, **Konsole**, **EmuDeck**, leftover **Install EmuDeck**, GyroDSU update/uninstall.
 
@@ -258,6 +259,32 @@ Also on the Desktop (stock or EmuDeck): **Return to Gaming Mode**, **Steam**, **
 
 - **Chrome** (system Flatpak) is the browser that works. `~/.local/bin/xdg-open` sends `http`/`https` here because Firefox on this Deck often opened blank for CLI logins (`grok login`, `agent login`).
 - **Firefox** (system Flatpak) is installed via Discover; leave it as backup, not the OAuth default.
+
+#### Chrome → Open WebUI (bookmark + new-tab button)
+
+Local Open WebUI is `http://127.0.0.1:3000` only. Do not change the Ollama bind to reach it.
+
+Installed under `$HOME` (survives SteamOS updates):
+
+| Piece | Path |
+| --- | --- |
+| Unpacked MV3 new-tab extension | `~/.local/share/steamdeck/chrome-open-webui-newtab/` (also `~/Applications/chrome-extensions/open-webui-newtab` → same) |
+| Chrome wrapper | `~/.local/bin/google-chrome` (always `--load-extension=…`) |
+| App menu + Desktop launcher | `~/.local/share/applications/com.google.Chrome.desktop` copied to `~/Desktop/com.google.Chrome.desktop` |
+| Bookmarks bar favorite | Chrome profile `Default/Bookmarks` title **Open WebUI** |
+| Fallbacks | Desktop **Open WebUI**; `Open-WebUI-bookmark.html` (open *inside Chrome*, drag the link); `Open-WebUI-bookmarks-import.html` (Chrome → Bookmarks manager → Import) |
+
+**How to see the big button:** fully **quit** Chrome (not just close a window — the Flatpak process must exit). Then launch **Google Chrome from the Desktop icon** (or the app-menu entry that lives in `~/.local/share/applications`). A new tab is a dark OLED page with one huge **Open WebUI** button. The bookmarks bar should show **Open WebUI** and stay visible (`bookmark_bar.show_on_all_tabs`).
+
+`--load-extension` does not stick if an already-running Chrome was started without that flag (new windows join the old process). The official Discover/system `.desktop` under `/var/lib/flatpak/exports/…` still launches **without** the flag — that is why **our** file is the one on `~/Desktop`.
+
+Homepage / startup URL was **not** forced in Preferences: Chrome SuperMAC would ignore or reset those keys. Re-apply after a profile reset:
+
+```bash
+bash ~/.config/steamdeck/install-chrome-open-webui.sh
+```
+
+If Chrome is running, the installer updates the extension/wrapper/desktop files and skips Bookmarks/Preferences so the profile is not corrupted. Quit Chrome and run it again to inject the favorite. Chrome may show a one-time “developer mode extension” banner; keep the extension.
 
 First-time CLI login (Desktop Konsole or `ssh -t`):
 
@@ -283,6 +310,7 @@ agent status
 | `~/.local/bin/cursor` | launcher |
 | `~/.local/bin/emudeck` | launcher |
 | `~/.local/bin/agent` / `cursor-agent` | Cursor Agent |
+| `~/.local/bin/google-chrome` | Flatpak Chrome + Open WebUI new-tab extension |
 | `~/.local/bin/gh` | GitHub CLI |
 | `~/.grok/bin/grok` | Grok CLI |
 
@@ -466,7 +494,7 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | See if the Deck is up | `deck ping` |
 | See if AI is healthy | `deck ai` / `deck audit` |
 | Chat in Game Mode | QAM → Decky → bonsAI (Ollama must be running) |
-| Chat like ChatGPT | Desktop Chrome → `http://127.0.0.1:3000` |
+| Chat like ChatGPT | Desktop **Google Chrome** (our icon) → new tab button or bookmarks bar **Open WebUI** |
 | Use WebUI from the Mac | `ssh -L 3000:127.0.0.1:3000 deck@10.0.0.143` |
 | Free resources for a game | `deck webui stop` and `deck ollama stop` |
 | After SteamOS update | `deck bootstrap` → Decky `install-decky.sh` → restart Game Mode → `deck audit` |

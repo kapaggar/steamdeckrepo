@@ -58,6 +58,7 @@ Local inference competes with running games.
 - User unit: `open-webui.service`
 - Persist dir: `~/containers/open-webui`
 - Pasta host-loopback; listen on `127.0.0.1:3000` only (not `0.0.0.0`)
+- Desktop Chrome: unpacked new-tab extension + bookmarks-bar favorite (see operator manual)
 
 ```
 deck webui

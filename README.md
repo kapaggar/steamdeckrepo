@@ -18,6 +18,8 @@ helpers/                 Mac + Deck scripts
   audit.sh               Update-surviving layout checklist
   ai-status.sh           Ollama + Decky + Open WebUI status
   install-decky.sh       Finish Decky Loader after SteamOS updates
+  install-chrome-open-webui.sh  Chrome bookmark + new-tab button for WebUI
+  chrome-open-webui-newtab/     unpacked MV3 extension source
 docs/architecture.md     $HOME-first, Distrobox, Ollama, Decky, Open WebUI
 ```
 
