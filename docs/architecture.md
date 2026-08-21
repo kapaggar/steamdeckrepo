@@ -7,7 +7,7 @@ SteamOS image updates wipe `/usr`. Persistent tools live under `$HOME`. This fil
 | Layer | Fate | Examples |
 | --- | --- | --- |
 | `/usr` | Disposable (SteamOS image) | Do not `pacman -S` tools here |
-| `$HOME` | Persistent | `~/.local/bin`, `~/.config`, `~/Applications`, `~/containers`, `~/.ollama` |
+| `$HOME` | Persistent | `~/.local/bin`, `~/.config`, `~/Applications`, `~/containers`, `~/.ollama`, `~/src` |
 
 Bootstrap (`helpers/bootstrap.sh`) creates the baseline dirs, enables `podman.socket`, and can install Distrobox into `~/.local`.
 
@@ -15,6 +15,7 @@ Bootstrap (`helpers/bootstrap.sh`) creates the baseline dirs, enables `podman.so
 deck bootstrap                    # dirs + podman.socket + ~/.local distrobox
 deck bootstrap --with-container   # also create Distrobox arch-tools
 deck bootstrap --with-ai          # also create Distrobox ai-box
+deck bootstrap --with-dev         # also create Distrobox dev (ubuntu:24.04)
 deck audit                        # checklist
 ```
 
@@ -30,8 +31,9 @@ sudo loginctl enable-linger deck
 | --- | --- | --- |
 | `arch-tools` | `archlinux:latest` | General user-space Arch tools (`deck box`) |
 | `ai-box` | `archlinux:latest` | Official Ollama lives **inside** this box (`deck box-ai`) |
+| `dev` | `ubuntu:24.04` | Compile toolchain (`deck dev` / `deck box-dev`). Project tree is host `~/src`. Independent of `ai-box`. |
 
-Distrobox itself is installed at `~/.local/bin/distrobox` so it survives image updates.
+Distrobox itself is installed at `~/.local/bin/distrobox` so it survives image updates. Toolchains in `dev` do **not** touch SteamOS `/usr`. Project sources stay on the host at `~/src` (shared `$HOME`; no container copies).
 
 ## Ollama — `127.0.0.1:11434`
 

@@ -2,7 +2,7 @@
 
 Owner guide for **सत्यBrave**. This is the single document for everything added on top of a **stock SteamOS** image on this Deck.
 
-**Last verified:** 2026-08-20 23:10 PDT, live SSH to `deck@10.0.0.143` (`audit.sh` + inventory + Protontricks Flatpak). Hardware is **Galileo** (OLED). SteamOS **3.8.16** (`BUILD_ID=20260716.1`, branch `stable`, `steamos-readonly` **enabled**).
+**Last verified:** 2026-08-21 01:20 PDT, live SSH to `deck@10.0.0.143` (`distrobox` `dev` + `ai-box` + toolchain check). Hardware is **Galileo** (OLED). SteamOS **3.8.16** (`BUILD_ID=20260716.1`, branch `stable`, `steamos-readonly` **enabled**).
 
 Related short notes: [architecture.md](architecture.md) (layout only) and the [repo README](../README.md) (Mac helpers). This manual is the operator book.
 
@@ -41,6 +41,7 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 | Mac control plane | `~/.config/steamdeck` → `/Users/wizops/DIPI/steam/helpers/` | n/a (Mac) | `source ~/.bashrc` then `deck …` |
 | Distrobox CLI | `~/.local/bin/distrobox` (1.8.2.5) | yes | `deck bootstrap` reinstalls if missing |
 | Distrobox `ai-box` | `archlinux:latest` container, `$HOME` storage | yes (container store in `$HOME`) | `deck box-ai` / `distrobox enter ai-box` |
+| Distrobox `dev` | `ubuntu:24.04` container, `$HOME` + `~/src` | yes (container store in `$HOME`) | `deck dev` / `deck box-dev` / `distrobox enter dev` |
 | Distrobox `arch-tools` | **not created** | — | Optional: `deck bootstrap --with-container` |
 | Ollama 0.32.14 | inside `ai-box`; models `~/.ollama` | yes | `deck ollama start\|stop\|restart` or `systemctl --user … ollama.service` |
 | `~/.local/bin/ollama` | Distrobox **wrapper** (must not be a host ELF) | yes | `ollama list` / `ollama pull …` |
@@ -60,7 +61,7 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 | Firefox Flatpak | `org.mozilla.firefox` **system** (154.0) | typically yes | Discover / app menu (http(s) is **not** the default) |
 | `xdg-open` wrapper | `~/.local/bin/xdg-open` → Chrome for `http(s)` | yes | used by Cursor / login flows |
 | EmuDeck AppImage | `~/Applications/EmuDeck.AppImage` + `~/.local/bin/emudeck` | yes | Desktop **EmuDeck** |
-| Emulator AppImages | `~/Applications/*.AppImage` (see §7) | yes | matching `.desktop` launchers |
+| Emulator AppImages | `~/Applications/*.AppImage` (see §8) | yes | matching `.desktop` launchers |
 | EmuDeck Flatpaks | user Flatpaks (Dolphin, PPSSPP, melonDS, …) | yes | Discover / Steam ROM Manager |
 | Steam RetroArch | `~/.steam/steam/steamapps/common/RetroArch` | yes | Steam library (stock-style install) |
 | Flatpak RetroArch | `org.libretro.RetroArch` (user, 1.22.2) | yes | EmuDeck / Discover — **not** the Steam one |
@@ -68,9 +69,9 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 | Protontricks | user Flatpak `com.github.Matoking.protontricks` 1.14.1 + `~/.local/bin/protontricks` | yes | `protontricks -l` / `bash ~/.config/steamdeck/install-protontricks.sh` |
 | Passwordless sudo | `/etc/sudoers.d/zz-deck-nopasswd` | **re-check** | must sort **after** `wheel` |
 | SSH | `sshd` enabled; Mac key login | image + `$HOME/.ssh` | `sudo systemctl start\|stop sshd` |
-| Desktop shortcuts | `~/Desktop/` + `~/.local/share/applications/` | yes | see §6 |
+| Desktop shortcuts | `~/Desktop/` + `~/.local/share/applications/` | yes | see §7 |
 
-**Not installed:** Distrobox `arch-tools` (audit warning only). Optional if you want a general Arch toolbox besides `ai-box`.
+**Not installed:** Distrobox `arch-tools` (audit warning only). Optional if you want a general Arch toolbox besides `ai-box` / `dev`.
 
 ---
 
@@ -148,6 +149,8 @@ deck audit             # ~/.config/steamdeck/audit.sh
 deck bootstrap         # dirs, podman.socket, Distrobox
 deck bootstrap --with-ai
 deck box-ai            # distrobox enter ai-box
+deck dev               # distrobox enter dev (Ubuntu toolchain)
+deck box-dev           # same as deck dev
 deck df                # disk + library sizes
 deck games             # steamapps/common folder names
 deck protontricks …    # Protontricks on the Deck (Flatpak wrapper)
@@ -249,7 +252,76 @@ First WebUI visit may ask you to create a **local** admin account. That stays on
 
 ---
 
-## 6. Desktop apps / AppImages / browsers
+## 6. Development (Distrobox `dev`)
+
+This is a **user-space Ubuntu toolbox** for compile and test work. It is **not** the AI stack and **not** Jellyfin. Do not stop `ai-box`, Ollama, Open WebUI, Decky, or a Jellyfin unit to use it. Game focus does **not** stop `dev`.
+
+SteamOS **`/usr` stays untouched.** The toolchain lives inside the box. Distrobox bind-mounts host `$HOME`, so there is **no container copy** of source.
+
+| | |
+| --- | --- |
+| Name | `dev` |
+| Image | `ubuntu:24.04` (`docker.io/library/ubuntu:24.04`) |
+| Home | host `$HOME` (`/home/deck`) |
+| Project tree | `~/src` on the host. Clone real repos as `~/src/<name>`. Do not invent placeholder projects. |
+| Independent of | `ai-box` (Ollama), Open WebUI, Decky, Jellyfin |
+
+### Enter
+
+On the Deck (Desktop Konsole):
+
+```bash
+deck dev
+# same:
+deck box-dev
+distrobox enter dev
+```
+
+From the Mac:
+
+```bash
+deck dev
+# same:
+deck box-dev
+```
+
+That SSHs in and runs `distrobox enter dev`.
+
+### Packages (inside the box, apt)
+
+Required: `build-essential` `git` `curl` `python3` `python3-venv` `nodejs` `npm` `golang-go`
+
+Extras from Ubuntu repos: `ca-certificates` `unzip` `jq` `ripgrep` `fd-find` (binary is `fdfind`)
+
+Do **not** `apt install` VS Code or Cursor inside the box (snap-heavy). Use **host Desktop** Cursor (`~/Applications/cursor`, already installed) or VS Code, then attach to the Distrobox, or `distrobox-export` a CLI onto the host PATH.
+
+Optional rustup (user-space inside the box) was skipped. Install later if you want Rust:
+
+```bash
+# inside `dev` only
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+### Recreate if missing
+
+If `dev` already exists, **reuse it** and only install missing packages. Never recreate `ai-box` for this.
+
+```bash
+# on Deck (non-interactive)
+distrobox create --name dev --image ubuntu:24.04 --yes
+distrobox enter -T dev -- sudo env DEBIAN_FRONTEND=noninteractive \
+  apt-get update
+distrobox enter -T dev -- sudo env DEBIAN_FRONTEND=noninteractive \
+  apt-get install -y build-essential git curl python3 python3-venv \
+  nodejs npm golang-go ca-certificates unzip jq ripgrep fd-find
+
+# or, after helpers are synced (creates the box only):
+deck bootstrap --with-dev
+```
+
+---
+
+## 7. Desktop apps / AppImages / browsers
 
 Switch to **Desktop Mode** for these. Game Mode can launch some of them via Steam/non-Steam shortcuts; Cursor’s wrapper already special-cases Steam’s reaper.
 
@@ -326,7 +398,7 @@ agent status
 
 ---
 
-## 7. Emulation (legal dumps only)
+## 8. Emulation (legal dumps only)
 
 Two stacks exist. They are **not** the same RetroArch.
 
@@ -348,7 +420,7 @@ Typical owner workflow:
 
 ---
 
-## 8. Windows redistributables (Protontricks)
+## 9. Windows redistributables (Protontricks)
 
 Windows titles on SteamOS run under **Proton**. Valve’s layer already includes **DXVK** (Direct3D) and a `d3dcompiler`. You almost never need Microsoft’s DirectX web installer (`dxwebsetup.exe`). What *does* sometimes go missing is a **Visual C++** runtime inside that game’s Wine prefix.
 
@@ -388,16 +460,16 @@ From the Mac: `deck protontricks -q 1243830 vcrun2019`. Extra library on an SD c
 
 ---
 
-## 9. Persistence rules and what gets wiped
+## 10. Persistence rules and what gets wiped
 
 | Layer | Fate | Examples |
 | --- | --- | --- |
 | `/usr` | **Wiped / replaced** on image update | Anything installed with `pacman` on the host |
 | `/etc` | **Can be reset** | `plugin_loader.service`, `zz-deck-nopasswd` — re-check |
-| `$HOME` | **Keeps** | `~/.local`, `~/.config`, `~/.ollama`, `~/Applications`, `~/containers`, `~/homebrew`, `~/Emulation`, Steam library, `~/.grok` |
+| `$HOME` | **Keeps** | `~/.local`, `~/.config`, `~/.ollama`, `~/Applications`, `~/containers`, `~/homebrew`, `~/Emulation`, `~/src`, Steam library, `~/.grok` |
 | User Flatpaks | **Keeps** | EmuDeck emulators |
 | System Flatpaks | **Usually keeps** (`/var`) | Chrome, Firefox — still confirm after a big SteamOS jump |
-| Distrobox / Podman storage | **Keeps** (`~/.local/share/containers`) | `ai-box`, Open WebUI image layers |
+| Distrobox / Podman storage | **Keeps** (`~/.local/share/containers`) | `ai-box`, `dev`, Open WebUI image layers |
 | This git repo | Mac only | Helpers are copied to the Deck; git metadata is not |
 
 **Wiped or broken after a typical SteamOS update:**
@@ -410,7 +482,7 @@ From the Mac: `deck protontricks -q 1243830 vcrun2019`. Extra library on an SD c
 
 ---
 
-## 10. Daily ops
+## 11. Daily ops
 
 ### Start the AI stack (Desktop or SSH)
 
@@ -449,9 +521,9 @@ deck audit
 deck ai
 ```
 
-Expect: linger yes, `ollama.service` active, API on `127.0.0.1:11434`, `qwen2.5:1.5b` listed, `plugin_loader` active, Open WebUI on `127.0.0.1:3000` **or** stopped if you left it off. One known-good warning today: **no `arch-tools` box** (optional).
+Expect: linger yes, `ollama.service` active, API on `127.0.0.1:11434`, `qwen2.5:1.5b` listed, `plugin_loader` active, Open WebUI on `127.0.0.1:3000` **or** stopped if you left it off, Distrobox `ai-box` **and** `dev`. One known-good warning today: **no `arch-tools` box** (optional).
 
-If the QAM plug is missing: restart Game Mode once. If it is still missing: §11 Decky reinstall.
+If the QAM plug is missing: restart Game Mode once. If it is still missing: §12 Decky reinstall.
 
 ### Disk
 
@@ -459,7 +531,7 @@ Internal `/home` was ~928 GiB, ~118 GiB used (13%) at last check. `deck df` 
 
 ---
 
-## 11. Recovery
+## 12. Recovery
 
 ### Re-run user-space bootstrap
 
@@ -476,6 +548,9 @@ deck bootstrap
 
 # 3) recreate ai-box only if missing (does not reinstall Ollama inside)
 deck bootstrap --with-ai
+
+# 4) recreate Ubuntu dev box only if missing (does not apt-install the toolchain)
+deck bootstrap --with-dev
 ```
 
 On the Deck, `~/.bashrc` must still contain:
@@ -523,7 +598,7 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 
 ---
 
-## 12. Do-not list
+## 13. Do-not list
 
 | Do not | Why |
 | --- | --- |
@@ -536,9 +611,11 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | Enable **ROCm** for Ollama | Unsupported path on this setup. Vulkan later, if ever. |
 | Symlink the Deck’s `~/.config/steamdeck` at the Mac repo | SteamOS `$HOME` should keep real files. |
 | Commit secrets into this repo | No `auth.json`, sudoers copies, `~/.grok` state, keys, models, AppImages. |
-| Use piracy / SteamRIP / random “ROM packs” | Legal dumps and BIOS only (§7). |
-| Copy a Windows game dump / `_CommonRedist` / `setup.exe` onto the Deck | Sideload is not how Proton games are installed. Steam + Protontricks verbs only (§8). |
+| Use piracy / SteamRIP / random “ROM packs” | Legal dumps and BIOS only (§8). |
+| Copy a Windows game dump / `_CommonRedist` / `setup.exe` onto the Deck | Sideload is not how Proton games are installed. Steam + Protontricks verbs only (§9). |
 | Leave Open WebUI up for AAA games | ~2 GiB+ and CPU; QAM **Deck Focus → Game focus** or `deck game` first. |
+| Stop or recreate `ai-box` / Jellyfin / Ollama for `dev` work | They are independent. `dev` only shares `$HOME`. |
+| `apt install` VS Code / Cursor inside `dev` | Snap-heavy. Use host Desktop Cursor / VS Code and attach, or `distrobox-export`. |
 
 ---
 
@@ -556,4 +633,5 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | Free resources for a game | `deck game` (or `deck webui stop` and `deck ollama stop`) |
 | After SteamOS update | `deck bootstrap` → Decky `install-decky.sh` → restart Game Mode → `deck audit` |
 | After editing helpers | `rsync` `helpers/` → `deck@10.0.0.143:~/.config/steamdeck/` |
-| Install Protontricks / VC++ for a Proton game | `bash ~/.config/steamdeck/install-protontricks.sh`; then `protontricks -q <appid> vcrun2019` (§8) |
+| Compile / git / node / go | `deck dev` (or `deck box-dev`); projects in `~/src` |
+| Install Protontricks / VC++ for a Proton game | `bash ~/.config/steamdeck/install-protontricks.sh`; then `protontricks -q <appid> vcrun2019` (§9) |

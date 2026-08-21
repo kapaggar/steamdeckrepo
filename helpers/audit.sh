@@ -35,6 +35,7 @@ _check_dir "${H}/.config/containers/systemd"
 _check_dir "${H}/.config/steamdeck"
 _check_dir "${H}/containers"
 _check_dir "${H}/Applications"
+_check_dir "${H}/src"
 
 echo
 echo "── User CLIs (~/.local/bin, ~/.grok/bin) ──"
@@ -84,6 +85,11 @@ if [[ -n "${DB}" ]]; then
     _pass "distrobox container ai-box"
   else
     _warn "no ai-box container (local AI)"
+  fi
+  if "${DB}" list 2>/dev/null | awk '{print $3}' | grep -qx dev; then
+    _pass "distrobox container dev"
+  else
+    _warn "no dev container (deck bootstrap --with-dev)"
   fi
 fi
 

@@ -49,7 +49,7 @@ Usage:  deck              this page
 
   Architecture (update-surviving $HOME layout)
     deck audit             remote audit checklist
-    deck bootstrap [OPTS]    remote bootstrap (--with-container)
+    deck bootstrap [OPTS]    remote bootstrap (--with-container / --with-ai / --with-dev)
     deck arch              architecture help
 
   Local AI (Ollama in Distrobox ai-box)
@@ -63,6 +63,7 @@ Usage:  deck              this page
     deck ollama logs       journalctl --user -u ollama.service
     deck ollama start|stop|restart
     deck box-ai            distrobox enter ai-box
+    deck dev | deck box-dev  distrobox enter dev (Ubuntu 24.04 toolchain)
     warning: local inference competes with running games
     Do not use bonsAI Install Ollama — use the Distrobox unit
     QAM: Decky → Deck Focus → Game focus / AI focus
@@ -112,7 +113,8 @@ Usage:  deck              this page
     deck bootstrap         mkdirs, podman.socket, ~/.local distrobox
     deck box               enter arch-tools Distrobox
     deck box-ai            enter ai-box Distrobox (Ollama)
-    Persistent: ~/.local/bin ~/.grok ~/.config ~/Applications ~/containers ~/.ollama
+    deck dev | deck box-dev  enter Ubuntu 24.04 Distrobox (toolchain; ~/src)
+    Persistent: ~/.local/bin ~/.grok ~/.config ~/Applications ~/containers ~/.ollama ~/src
     Disposable:  /usr (SteamOS image — do not install tools here)
 
 EOF
@@ -148,6 +150,7 @@ On-Deck commands (run in Konsole on the Steam Deck)
     deck bootstrap         bootstrap user-space (add --with-container)
     deck box               distrobox enter arch-tools
     deck box-ai            distrobox enter ai-box
+    deck dev | deck box-dev  distrobox enter dev (Ubuntu toolchain)
     deck ai                local Ollama + Decky + Open WebUI status
     deck game | deck ai-off   Game focus (stop AI stack)
     deck ai-on                AI focus (start Ollama + Open WebUI)
@@ -168,6 +171,13 @@ Installed tools on Deck
   protontricks           ~/.local/bin/protontricks → user Flatpak
   google-chrome          ~/.local/bin/google-chrome → Flatpak + Open WebUI new-tab
   retroarch              Steam library (steamapps/common/RetroArch)
+
+  Development (Distrobox dev — Ubuntu 24.04)
+    gcc / python3 / node / go   inside the box, not on SteamOS /usr
+    ~/src                       host project tree (shared $HOME; no container copies)
+    deck dev | deck box-dev     distrobox enter dev
+    IDE                         Cursor / VS Code on host Desktop; attach or distrobox-export
+    Independent of ai-box, Ollama, Open WebUI, Decky, Jellyfin
 
   Local AI
     ollama                 ~/.local/bin/ollama → Distrobox ai-box
@@ -203,6 +213,7 @@ Common paths on Deck (persistent under $HOME)
   ~/.steam/steam/steamapps/      Steam library
   ~/.local/share/Steam/userdata/ saves
   ~/Downloads/                   Mac deckpush drop folder
+  ~/src/                         Distrobox dev project tree (shared $HOME)
   /run/media/deck/               SD / USB (may change mount name)
 
   Local AI
@@ -237,6 +248,7 @@ Update-surviving SteamOS architecture
     deck bootstrap                    podman.socket + ~/.local distrobox
     deck bootstrap --with-container   also create arch-tools Distrobox
     deck bootstrap --with-ai          also create ai-box Distrobox
+    deck bootstrap --with-dev         also create Ubuntu 24.04 Distrobox (dev)
 
   Headless services at boot
     sudo loginctl enable-linger deck   (once, needs password)

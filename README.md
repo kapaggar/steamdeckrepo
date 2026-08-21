@@ -38,6 +38,7 @@ deck ssh           # interactive shell on the Deck
 deck ai            # local AI status
 deck game          # stop AI stack before a game
 deck ai-on         # start Ollama + Open WebUI again
+deck dev           # Distrobox Ubuntu 24.04 toolchain (also: deck box-dev)
 ```
 
 Override the target with `STEAMDECK_HOST`, `STEAMDECK_USER`, or `STEAMDECK_SSH`.

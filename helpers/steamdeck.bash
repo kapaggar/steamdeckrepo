@@ -68,6 +68,10 @@ deck() {
       shift
       deckboxai "$@"
       ;;
+    dev|box-dev)
+      shift
+      deckdev "$@"
+      ;;
     ai)
       shift
       deckai "$@"
@@ -287,6 +291,11 @@ deckbox() {
 deckboxai() {
   deckping || return 1
   _deck_ssh -t 'export PATH="/usr/bin:/bin:$HOME/.local/bin:$PATH"; distrobox enter ai-box'
+}
+
+deckdev() {
+  deckping || return 1
+  _deck_ssh -t 'export PATH="/usr/bin:/bin:$HOME/.local/bin:$PATH"; distrobox enter dev'
 }
 
 deckai() {

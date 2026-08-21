@@ -52,6 +52,14 @@ deckboxai() {
   exec "${db}" enter ai-box "$@"
 }
 
+deckdev() {
+  local db="${HOME}/.local/bin/distrobox"
+  [[ -x "${db}" ]] || db=$(command -v distrobox 2>/dev/null || true)
+  [[ -n "${db}" ]] || { echo "distrobox not found — run: deck bootstrap" >&2; return 1; }
+  export PATH="/usr/bin:/bin:${HOME}/.local/bin:${PATH}"
+  exec "${db}" enter dev "$@"
+}
+
 deckai() {
   bash "${HOME}/.config/steamdeck/ai-status.sh"
 }
@@ -153,6 +161,10 @@ deck() {
     box-ai|ai-box)
       shift
       deckboxai "$@"
+      ;;
+    dev|box-dev)
+      shift
+      deckdev "$@"
       ;;
     ai)
       shift

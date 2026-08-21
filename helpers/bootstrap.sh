@@ -5,10 +5,12 @@ set -euo pipefail
 
 WITH_CONTAINER=0
 WITH_AI=0
+WITH_DEV=0
 for arg in "$@"; do
   case "${arg}" in
     --with-container) WITH_CONTAINER=1 ;;
     --with-ai) WITH_AI=1 ;;
+    --with-dev) WITH_DEV=1 ;;
   esac
 done
 
@@ -20,6 +22,7 @@ mkdir -p "${H}/.local/share/containers"
 mkdir -p "${H}/containers"
 mkdir -p "${H}/Applications"
 mkdir -p "${H}/.config/steamdeck"
+mkdir -p "${H}/src"
 
 # PATH for this session (bashrc also sets this)
 export PATH="${H}/.local/bin:${H}/.grok/bin:${PATH}"
@@ -77,6 +80,17 @@ if [[ "${WITH_AI}" -eq 1 && -n "${DB}" ]]; then
     echo "creating distrobox ai-box (may take a few minutes) …"
     "${DB}" create --name ai-box --image docker.io/library/archlinux:latest --yes
     echo "distrobox ai-box: created — next: official ollama install inside the box"
+  fi
+fi
+
+# --- Optional dev box (Ubuntu toolchain; independent of ai-box) ---
+if [[ "${WITH_DEV}" -eq 1 && -n "${DB}" ]]; then
+  if "${DB}" list 2>/dev/null | awk '{print $3}' | grep -qx dev; then
+    echo "distrobox dev: already exists"
+  else
+    echo "creating distrobox dev (may take a few minutes) …"
+    "${DB}" create --name dev --image ubuntu:24.04 --yes
+    echo "distrobox dev: created — next: apt install the toolchain inside the box"
   fi
 fi
 
