@@ -50,6 +50,7 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 | `~/.local/bin/ollama` | Distrobox **wrapper** (must not be a host ELF) | yes | `ollama list` / `ollama pull …` |
 | Open WebUI | Quadlet `~/.config/containers/systemd/open-webui.container`; data `~/containers/open-webui` | yes | `deck webui start\|stop\|restart` |
 | Jellyfin | Quadlet `~/.config/containers/systemd/jellyfin.container`; config `~/containers/jellyfin/config`; media `~/media` | yes | `deck jellyfin start\|stop\|restart` |
+| *arr (Radarr / Sonarr / Prowlarr / Bazarr) | Quadlets `~/.config/containers/systemd/{radarr,sonarr,prowlarr,bazarr}.container`; config `~/containers/<name>`; libraries `~/media/{movies,tv}` | yes | `deck arr` / `deck arr start\|stop\|restart` |
 | Podman user socket | `podman.socket` (user) | image binary; enable is user | `systemctl --user start\|stop podman.socket` |
 | User linger | `loginctl` linger for `deck` | usually yes; re-check | `sudo loginctl enable-linger deck` once |
 | Decky Loader v3.2.6 | `~/homebrew/` + **system** `plugin_loader.service` | tree yes; **unit re-check** | `sudo systemctl start\|stop plugin_loader`; after updates: `install-decky.sh` |
@@ -101,15 +102,22 @@ Override from any Mac shell: `STEAMDECK_HOST`, `STEAMDECK_USER`, `STEAMDECK_SSH`
 | `127.0.0.1:3000` | Open WebUI (pasta publishes host port) | **localhost only** |
 | `127.0.0.1:1337` | Decky PluginLoader | localhost |
 | `0.0.0.0:8096` | Jellyfin | LAN first-run wizard; media `~/media` |
+| `127.0.0.1:7878` | Radarr | **localhost only** — movies library manager |
+| `127.0.0.1:8989` | Sonarr | **localhost only** — TV library manager |
+| `127.0.0.1:9696` | Prowlarr | **localhost only** — indexer manager (you add indexers) |
+| `127.0.0.1:6767` | Bazarr | **localhost only** — subtitles |
 | `0.0.0.0:32000` | stock SteamOS devkit | Valve, not ours |
 
 Do **not** move Ollama or Open WebUI to `0.0.0.0` to “reach them from the Mac.” Use an SSH tunnel instead:
 
 ```bash
-ssh -L 3000:127.0.0.1:3000 -L 11434:127.0.0.1:11434 deck@10.0.0.143
+ssh -L 3000:127.0.0.1:3000 -L 11434:127.0.0.1:11434 \
+  -L 7878:127.0.0.1:7878 -L 8989:127.0.0.1:8989 \
+  -L 9696:127.0.0.1:9696 -L 6767:127.0.0.1:6767 \
+  deck@10.0.0.143
 ```
 
-Then on the Mac: `http://127.0.0.1:3000` (WebUI) and `http://127.0.0.1:11434` (Ollama API).
+Then on the Mac: `http://127.0.0.1:3000` (WebUI), `http://127.0.0.1:11434` (Ollama API), and the *arr UIs on `7878` / `8989` / `9696` / `6767`.
 
 ### Sudo
 
@@ -152,6 +160,8 @@ deck webui             # http://127.0.0.1:3000 + status
 deck webui start|stop|restart|logs
 deck jellyfin          # http://127.0.0.1:8096 and http://10.0.0.143:8096
 deck jellyfin start|stop|restart|logs
+deck arr               # Radarr/Sonarr/Prowlarr/Bazarr on 127.0.0.1
+deck arr start|stop|restart|logs|install
 deck audit             # ~/.config/steamdeck/audit.sh
 deck bootstrap         # dirs, podman.socket, Distrobox
 deck bootstrap --with-ai
@@ -237,7 +247,7 @@ ollama pull qwen2.5:1.5b
 - **Plugins running:** bonsAI, decky-ollama, **Deck Focus** (all under `~/homebrew/plugins/`).
 - **QAM:** Game Mode → … (Quick Access) → plug icon. If the icon is missing, **restart Game Mode once** (or reboot).
 - **Deck Focus:** QAM → Decky → **Deck Focus**. Two large buttons:
-  - **Game focus (stop AI)** — runs `~/.config/steamdeck/game-focus.sh` as user `deck` (not root). Stops `open-webui.service`, `ollama.service`, `jellyfin.service`, then our rootless Podman containers `open-webui` and `ai-box`. Does **not** stop Steam, `plugin_loader`, Flatpak Chrome/Firefox, or `sdgyrodsu`.
+  - **Game focus (stop AI)** — runs `~/.config/steamdeck/game-focus.sh` as user `deck` (not root). Stops `open-webui.service`, `ollama.service`, `jellyfin.service`, `radarr` / `sonarr` / `prowlarr` / `bazarr` if present, then our rootless Podman containers `open-webui` and `ai-box`. Does **not** stop Steam, `plugin_loader`, Flatpak Chrome/Firefox, or `sdgyrodsu`.
   - **AI focus (start stack)** — runs `~/.config/steamdeck/ai-focus.sh` as `deck`. Starts `ollama.service`, waits until `127.0.0.1:11434` answers, then starts `open-webui.service`.
   Same actions from the Mac: `deck game` / `deck ai-off` (stop) and `deck ai-on` (start). Plugin source lives in this repo at `plugins/deck-focus/`.
 - **bonsAI:** chat UI pointed at `http://127.0.0.1:11434`. **Never tap Install Ollama or Update installed.** That drops a host tarball in `~/.local/lib/ollama` (~2 GiB CUDA/Vulkan junk) and fights `ai-box`.
@@ -262,6 +272,39 @@ First WebUI visit may ask you to create a **local** admin account. That stays on
 ### Jellyfin
 
 Manual Quadlet (`jellyfin.service`), not the official SteamOS installer (that script is interactive). First-run wizard: [http://127.0.0.1:8096](http://127.0.0.1:8096) on the Deck or [http://10.0.0.143:8096](http://10.0.0.143:8096) on the LAN. Libraries read `~/media` (mounted read-only). Game focus stops `jellyfin.service`; AI focus does not start it.
+
+### *arr library managers (localhost)
+
+Library managers next to Jellyfin. **Configure indexers yourself; we do not ship any.** No pirate indexer lists, torrent-site configs, Usenet keys, or download clients (qBittorrent / SABnzbd were skipped — none already on this Deck).
+
+| App | Unit | URL (Deck / SSH `-L`) | Data | Library bind |
+| --- | --- | --- | --- | --- |
+| Radarr | `radarr.service` | [http://127.0.0.1:7878](http://127.0.0.1:7878) | `~/containers/radarr` | `~/media/movies` |
+| Sonarr | `sonarr.service` | [http://127.0.0.1:8989](http://127.0.0.1:8989) | `~/containers/sonarr` | `~/media/tv` |
+| Prowlarr | `prowlarr.service` | [http://127.0.0.1:9696](http://127.0.0.1:9696) | `~/containers/prowlarr` | — |
+| Bazarr | `bazarr.service` | [http://127.0.0.1:6767](http://127.0.0.1:6767) | `~/containers/bazarr` | movies + tv |
+
+**Compatibility (Galileo OLED, SteamOS 3.8.16, x86_64):**
+
+- Official **linux/amd64** linuxserver images work on this Deck. It is not ARM.
+- Idle RAM is modest: Radarr ~235 MiB, Sonarr ~200 MiB, Prowlarr ~225 MiB, Bazarr ~330 MiB (~1 GiB together). **Jellyfin transcoding + *arr + Ollama together will fight the 15W APU** (Jellyfin was ~2 GiB and Open WebUI ~2.3 GiB when last checked). Game focus must stop *arr (and already stops Jellyfin / Ollama / Open WebUI).
+- Rootless Podman Quadlets under `$HOME`, same pattern as `jellyfin.container`.
+- Images listen `0.0.0.0` inside the container; host publish is `127.0.0.1:PORT:PORT` (admin tools on a handheld that also games). Not on the LAN.
+- `PUID=1000` `PGID=1000` `TZ=America/Los_Angeles`, `UserNS=keep-id`, pasta `--map-host-loopback 10.0.2.2`.
+- Empty stubs: `~/media/movies`, `~/media/tv`, `~/media/downloads`. No copyrighted media is installed.
+
+When linking apps **inside** a container (Prowlarr → Radarr/Sonarr, Bazarr → Radarr/Sonarr), use `http://10.0.2.2:<port>` — the same pasta host-loopback as Open WebUI → Ollama. `127.0.0.1` inside a box is that box, not the host.
+
+**Skipped:** Readarr (troubled project), Whisparr, Lidarr (extra RAM; add later if you want music), qBittorrent / SABnzbd (no download client already present).
+
+```bash
+deck arr
+deck arr start|stop|restart
+# re-apply Quadlets after a SteamOS wipe of nothing (they live in $HOME):
+deck arr install
+```
+
+From the Mac, tunnel (§3); do not move these binds to `0.0.0.0`.
 
 ---
 
@@ -502,7 +545,7 @@ From the Mac: `deck protontricks -q 1243830 vcrun2019`. Extra library on an SD c
 | `$HOME` | **Keeps** | `~/.local`, `~/.config`, `~/.ollama`, `~/Applications`, `~/containers`, `~/homebrew`, `~/Emulation`, `~/src`, Steam library, `~/.grok` |
 | User Flatpaks | **Keeps** | EmuDeck emulators |
 | System Flatpaks | **Usually keeps** (`/var`) | Chrome, Firefox — still confirm after a big SteamOS jump |
-| Distrobox / Podman storage | **Keeps** (`~/.local/share/containers`) | `ai-box`, `dev`, Open WebUI image layers |
+| Distrobox / Podman storage | **Keeps** (`~/.local/share/containers`) | `ai-box`, `dev`, Open WebUI / *arr image layers |
 | User Flatpak VS Code | **Keeps** (`~/.local/share/flatpak`) | `com.visualstudio.code` + `~/.continue` |
 | This git repo | Mac only | Helpers are copied to the Deck; git metadata is not |
 
@@ -512,7 +555,7 @@ From the Mac: `deck protontricks -q 1243830 vcrun2019`. Extra library on an SD c
 - Decky’s **system** unit → QAM plug disappears until `install-decky.sh`.
 - Sometimes passwordless sudo or linger — verify `sudo -n true` and `loginctl show-user deck -p Linger`.
 
-**Not wiped:** models in `~/.ollama`, WebUI data, EmuDeck trees, Cursor/Grok installs, helper scripts (unless you overwrite them).
+**Not wiped:** models in `~/.ollama`, WebUI data, *arr config under `~/containers/{radarr,sonarr,prowlarr,bazarr}`, EmuDeck trees, Cursor/Grok installs, helper scripts (unless you overwrite them).
 
 ---
 
@@ -543,7 +586,7 @@ deck game          # or: deck ai-off
 #   deck webui stop && deck ollama stop
 ```
 
-Leave Decky running (small). Start the stack again with QAM **AI focus (start stack)** or `deck ai-on` when you want QAM chat. If a game is already stuttering, stop WebUI first (it was the large one). Deck Focus does not kill Steam or the QAM plug.
+Leave Decky running (small). Start the stack again with QAM **AI focus (start stack)** or `deck ai-on` when you want QAM chat. AI focus does **not** start Jellyfin or *arr — `deck jellyfin start` / `deck arr start` if you want those again. If a game is already stuttering, stop WebUI first (it was the large one). Deck Focus does not kill Steam or the QAM plug.
 
 ### Reboot checks (30 seconds)
 
@@ -622,6 +665,16 @@ systemctl --user restart open-webui.service
 
 Data in `~/containers/open-webui` is kept if you do not delete it.
 
+### Recreate *arr
+
+```bash
+bash ~/.config/steamdeck/install-arr.sh
+# or from the Mac:
+deck arr install
+```
+
+Config in `~/containers/{radarr,sonarr,prowlarr,bazarr}` is kept if you do not delete it. The script still does not add indexers or download clients.
+
 ### Recreate linger / sudo after an update
 
 ```bash
@@ -637,7 +690,8 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | Do not | Why |
 | --- | --- |
 | bonsAI **Install Ollama** / **Update installed** | Host tarball in `~/.local/bin` + `~/.local/lib/ollama`; second server; fights `ai-box`. Chat UI is fine. |
-| Bind Ollama or Open WebUI on `0.0.0.0` | Exposes a local LLM UI/API on the LAN. Use SSH `-L` instead. |
+| Bind Ollama, Open WebUI, or *arr on `0.0.0.0` | Exposes admin UIs on the LAN. Use SSH `-L` instead. |
+| Commit indexer lists / Usenet keys / torrent-site configs | *arr are library managers only. Configure indexers yourself; this repo ships none. |
 | Let decky-ollama `pkill` Ollama or install a host binary | Breaks the Distrobox unit. Keep the patched plugin. |
 | `pacman -S` onto host `/usr` | Gone on the next SteamOS image. Use Distrobox / Flatpak / `$HOME`. |
 | Disable `steamos-readonly` “just to install things” | Fights the A/B image. Not how this Deck is set up. |
@@ -647,7 +701,7 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | Commit secrets into this repo | No `auth.json`, sudoers copies, `~/.grok` state, keys, models, AppImages. |
 | Use piracy / SteamRIP / random “ROM packs” | Legal dumps and BIOS only (§8). |
 | Copy a Windows game dump / `_CommonRedist` / `setup.exe` onto the Deck | Sideload is not how Proton games are installed. Steam + Protontricks verbs only (§9). |
-| Leave Open WebUI up for AAA games | ~2 GiB+ and CPU; QAM **Deck Focus → Game focus** or `deck game` first. |
+| Leave Open WebUI / Jellyfin transcode / *arr up for AAA games | RAM + the 15W APU; QAM **Deck Focus → Game focus** or `deck game` first. |
 | Stop or recreate `ai-box` / Jellyfin / Ollama for `dev` work | They are independent. `dev` only shares `$HOME`. |
 | `apt install` VS Code / Cursor inside `dev` | Snap-heavy. Use host Desktop Cursor / VS Code and attach, or `distrobox-export`. |
 | Enable postgres / redis / localstack Quadlets by default | Surprise RAM on a handheld. Examples stay commented. |
@@ -665,7 +719,8 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | Stop AI before a game | QAM → Decky → **Deck Focus** → Game focus, or `deck game` |
 | Start AI stack again | QAM → Decky → **Deck Focus** → AI focus, or `deck ai-on` |
 | Chat like ChatGPT | Desktop **Google Chrome** (our icon) → new tab button or bookmarks bar **Open WebUI** |
-| Use WebUI from the Mac | `ssh -L 3000:127.0.0.1:3000 deck@10.0.0.143` |
+| Use WebUI / *arr from the Mac | `ssh -L` tunnel (§3) — not LAN publish |
+| *arr status | `deck arr` |
 | Free resources for a game | `deck game` (or `deck webui stop` and `deck ollama stop`) |
 | After SteamOS update | `deck bootstrap` → Decky `install-decky.sh` → restart Game Mode → `deck audit` |
 | After editing helpers | `rsync` `helpers/` → `deck@10.0.0.143:~/.config/steamdeck/` |

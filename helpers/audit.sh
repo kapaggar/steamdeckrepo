@@ -184,6 +184,39 @@ fi
   || _warn "missing ~/containers/open-webui"
 
 echo
+echo "── *arr library managers (localhost only) ──"
+for spec in "radarr 7878" "sonarr 8989" "prowlarr 9696" "bazarr 6767"; do
+  name=${spec%% *}
+  port=${spec##* }
+  if [[ -f "${H}/.config/containers/systemd/${name}.container" ]]; then
+    _pass "quadlet ${name}.container"
+  else
+    _warn "missing ~/.config/containers/systemd/${name}.container"
+  fi
+  if systemctl --user is-active --quiet "${name}.service" 2>/dev/null; then
+    _pass "${name}.service active"
+  else
+    _warn "${name}.service $(systemctl --user is-active "${name}.service" 2>/dev/null || echo inactive)"
+  fi
+  arr_code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 4 "http://127.0.0.1:${port}" 2>/dev/null || echo 000)
+  if [[ "${arr_code}" =~ ^(200|301|302|303|307|308)$ ]]; then
+    _pass "${name} http://127.0.0.1:${port} (HTTP ${arr_code})"
+  else
+    _warn "${name} not answering on 127.0.0.1:${port} (HTTP ${arr_code})"
+  fi
+  if ss -lnt 2>/dev/null | awk -v host="127.0.0.1:${port}" -v all="0.0.0.0:${port}" '$4==host{found=1} $4==all{bad=1} END{exit (found && !bad)?0:1}'; then
+    _pass "${name} listen 127.0.0.1:${port} only"
+  elif ss -lnt 2>/dev/null | grep -q "0.0.0.0:${port}"; then
+    _warn "${name} listening on 0.0.0.0:${port} (should be 127.0.0.1 only)"
+  fi
+done
+[[ -d "${H}/media/movies" && -d "${H}/media/tv" && -d "${H}/media/downloads" ]] \
+  && _pass "~/media/{movies,tv,downloads}" \
+  || _warn "missing ~/media movies/tv/downloads (run: bash ~/.config/steamdeck/install-arr.sh)"
+[[ -x "${H}/.config/steamdeck/install-arr.sh" ]] && _pass "install-arr.sh" \
+  || _warn "missing install-arr.sh"
+
+echo
 echo "── Chrome Open WebUI (new tab + bookmark) ──"
 EXT="${H}/.local/share/steamdeck/chrome-open-webui-newtab"
 [[ -f "${EXT}/manifest.json" && -f "${EXT}/newtab.html" ]] \

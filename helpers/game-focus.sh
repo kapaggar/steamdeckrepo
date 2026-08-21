@@ -7,12 +7,16 @@ export HOME="${HOME:-/home/deck}"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/1000}"
 export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=${XDG_RUNTIME_DIR}/bus}"
 
-echo "Game focus: stopping local AI (Ollama + Open WebUI + our containers)"
+echo "Game focus: stopping local AI + *arr (Ollama + Open WebUI + Jellyfin + library managers)"
 echo "  leaving Steam, Decky plugin_loader, Flatpak browsers, and sdgyrodsu alone"
 
 systemctl --user stop open-webui.service 2>/dev/null || true
 systemctl --user stop ollama.service 2>/dev/null || true
 systemctl --user stop jellyfin.service 2>/dev/null || true
+systemctl --user stop radarr.service 2>/dev/null || true
+systemctl --user stop sonarr.service 2>/dev/null || true
+systemctl --user stop prowlarr.service 2>/dev/null || true
+systemctl --user stop bazarr.service 2>/dev/null || true
 
 # Only AI containers we created. Never a blanket podman stop --all.
 # Do not add: jellyfin*, dev, or other non-AI boxes.
@@ -31,4 +35,4 @@ if command -v podman >/dev/null 2>&1; then
   done
 fi
 
-echo "Game focus: AI stack stopped"
+echo "Game focus: AI + *arr stack stopped"

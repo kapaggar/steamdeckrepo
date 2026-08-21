@@ -17,7 +17,8 @@ helpers/                 Mac + Deck scripts
   bootstrap.sh           $HOME-first bootstrap (podman, distrobox, optional boxes)
   audit.sh               Update-surviving layout checklist
   ai-status.sh           Ollama + Decky + Open WebUI status
-  game-focus.sh          STOP: Ollama + Open WebUI + our AI containers
+  game-focus.sh          STOP: Ollama + Open WebUI + Jellyfin + *arr
+  install-arr.sh         Radarr/Sonarr/Prowlarr/Bazarr Quadlets (localhost)
   ai-focus.sh            START: ollama.service, wait for :11434, then WebUI
   install-decky.sh       Finish Decky Loader after SteamOS updates
   install-chrome-open-webui.sh  Chrome bookmark + new-tab button for WebUI
@@ -42,6 +43,7 @@ deck game          # stop AI stack before a game
 deck ai-on         # start Ollama + Open WebUI again
 deck dev           # Distrobox Ubuntu 24.04 toolchain (also: deck box-dev)
 deck vscode        # host VS Code (Continue → local Ollama)
+deck arr           # *arr library managers (localhost; no indexers shipped)
 ```
 
 Override the target with `STEAMDECK_HOST`, `STEAMDECK_USER`, or `STEAMDECK_SSH`.
@@ -65,6 +67,7 @@ Keep Deck copies as real files (SteamOS `$HOME`); do not symlink the Deck at the
 | --- | --- |
 | Ollama (Distrobox `ai-box`) | `127.0.0.1:11434` |
 | Open WebUI (rootless Quadlet) | `127.0.0.1:3000` |
+| *arr (Radarr/Sonarr/Prowlarr/Bazarr) | `127.0.0.1:7878` / `:8989` / `:9696` / `:6767` |
 | Decky + bonsAI | Gaming Mode QAM; talk to the Distrobox unit |
 
 Do not use bonsAI **Install Ollama**. Do not bind these services on `0.0.0.0`.

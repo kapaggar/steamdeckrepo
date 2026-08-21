@@ -23,6 +23,7 @@ mkdir -p "${H}/containers"
 mkdir -p "${H}/Applications"
 mkdir -p "${H}/.config/steamdeck"
 mkdir -p "${H}/src"
+mkdir -p "${H}/media/movies" "${H}/media/tv" "${H}/media/downloads"
 
 # PATH for this session (bashrc also sets this)
 export PATH="${H}/.local/bin:${H}/.grok/bin:${PATH}"

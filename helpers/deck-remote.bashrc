@@ -131,6 +131,42 @@ deckollama() {
   esac
 }
 
+deckjellyfin() {
+  local sub=${1:-status}
+  case "${sub}" in
+    start|stop|restart)
+      systemctl --user "${sub}" jellyfin.service
+      systemctl --user --no-pager -l status jellyfin.service | head -16
+      ;;
+    logs|log)
+      shift
+      journalctl --user -u jellyfin.service -n "${1:-80}" --no-pager
+      ;;
+    *)
+      echo "Jellyfin  http://127.0.0.1:8096  and LAN :8096  (media ~/media)"
+      systemctl --user --no-pager -l status jellyfin.service | head -16
+      ;;
+  esac
+}
+
+deckarr() {
+  local sub=${1:-status}
+  case "${sub}" in
+    install|apply|start|stop|restart)
+      bash "${HOME}/.config/steamdeck/install-arr.sh" "${sub}"
+      ;;
+    logs|log)
+      shift
+      bash "${HOME}/.config/steamdeck/install-arr.sh" logs "$@"
+      ;;
+    *)
+      echo "*arr  http://127.0.0.1:{7878,8989,9696,6767}  (localhost only)"
+      echo "  configure indexers yourself; we do not ship any"
+      bash "${HOME}/.config/steamdeck/install-arr.sh" status
+      ;;
+  esac
+}
+
 deck() {
   case "${1:-}" in
     ''|help|-h|--help)
@@ -207,6 +243,14 @@ deck() {
     webui|open-webui)
       shift
       deckwebui "$@"
+      ;;
+    jellyfin|jf)
+      shift
+      deckjellyfin "$@"
+      ;;
+    arr)
+      shift
+      deckarr "$@"
       ;;
     df)
       deckdf

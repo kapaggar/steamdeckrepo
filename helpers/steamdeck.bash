@@ -100,6 +100,10 @@ deck() {
       shift
       deckjellyfin "$@"
       ;;
+    arr)
+      shift
+      deckarr "$@"
+      ;;
     ssh|sh|shell)
       shift
       decksh "$@"
@@ -393,6 +397,28 @@ deckjellyfin() {
     *)
       echo "Jellyfin  http://127.0.0.1:8096  and  http://10.0.0.143:8096  (first-run wizard; media ~/media)"
       _deck_ssh "systemctl --user --no-pager -l status jellyfin.service | head -16"
+      ;;
+  esac
+}
+
+deckarr() {
+  deckping || return 1
+  local sub=${1:-status}
+  case "${sub}" in
+    install|apply)
+      _deck_ssh 'bash ~/.config/steamdeck/install-arr.sh install'
+      ;;
+    start|stop|restart)
+      _deck_ssh "bash ~/.config/steamdeck/install-arr.sh ${sub}"
+      ;;
+    logs|log)
+      shift
+      _deck_ssh "bash ~/.config/steamdeck/install-arr.sh logs $(printf '%q ' "$@")"
+      ;;
+    *)
+      echo "*arr  http://127.0.0.1:{7878,8989,9696,6767}  (localhost; SSH -L from Mac)"
+      echo "  configure indexers yourself; we do not ship any"
+      _deck_ssh 'bash ~/.config/steamdeck/install-arr.sh status'
       ;;
   esac
 }

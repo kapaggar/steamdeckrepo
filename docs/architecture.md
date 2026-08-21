@@ -69,6 +69,18 @@ deck webui start|stop|restart|logs
 
 SSH tunnel from the Mac if you need the UI remotely. Do not publish it on the LAN.
 
+## *arr library managers — `127.0.0.1:{7878,8989,9696,6767}`
+
+Rootless Quadlets (`radarr.service`, `sonarr.service`, `prowlarr.service`, `bazarr.service`). linuxserver amd64 images. Localhost publish only. Pasta host-loopback `10.0.2.2` for inter-app URLs. Game focus stops them. **No indexers or download clients are shipped.**
+
+```
+deck arr
+deck arr start|stop|restart
+bash ~/.config/steamdeck/install-arr.sh
+```
+
+Skipped: Readarr, Whisparr, Lidarr, qBittorrent, SABnzbd.
+
 ## Decky (Gaming Mode QAM)
 
 - User-space tree: `~/homebrew/` (PluginLoader + plugins)

@@ -64,6 +64,9 @@ Usage:  deck              this page
     deck ollama start|stop|restart
     deck jellyfin          http://127.0.0.1:8096 and http://10.0.0.143:8096
     deck jellyfin start|stop|restart|logs
+    deck arr               Radarr/Sonarr/Prowlarr/Bazarr on 127.0.0.1 (status)
+    deck arr start|stop|restart|logs|install
+    warning: *arr UIs are localhost-only; configure indexers yourself — we ship none
     deck box-ai            distrobox enter ai-box
     deck dev | deck box-dev  distrobox enter dev (Ubuntu 24.04 toolchain)
     deck vscode            launch host VS Code (or: deck vscode install)
@@ -163,6 +166,7 @@ On-Deck commands (run in Konsole on the Steam Deck)
     deck webui             Open WebUI http://127.0.0.1:3000
     deck ollama            ollama.service status / logs / start|stop
     deck jellyfin          Jellyfin http://127.0.0.1:8096 / http://10.0.0.143:8096
+    deck arr               *arr library managers on 127.0.0.1 (no indexers shipped)
     Do not use bonsAI Install Ollama — use the Distrobox unit
     QAM: Decky → Deck Focus
 EOF
@@ -188,7 +192,7 @@ Installed tools on Deck
     kubectl / helm         ~/.local/bin (shared \$HOME)
     ~/src                  host project tree (no container copies)
     deck dev | deck vscode
-    Independent of ai-box, Open WebUI, Decky, Jellyfin
+    Independent of ai-box, Open WebUI, Decky, Jellyfin, *arr
     DOCKER_HOST=unix:///run/user/1000/podman/podman.sock
     Do not start postgres/redis/localstack by default
 
@@ -196,6 +200,7 @@ Installed tools on Deck
     ollama                 ~/.local/bin/ollama → Distrobox ai-box
     ollama.service         user systemd (OLLAMA_HOST=127.0.0.1:11434)
     Open WebUI             http://127.0.0.1:3000  (Quadlet; Chrome new tab / bookmark)
+    *arr                   Radarr :7878 Sonarr :8989 Prowlarr :9696 Bazarr :6767 (127.0.0.1)
     Decky + bonsAI         QAM chat (plugin_loader.service; restart Game Mode for QAM icon)
     Decky Deck Focus       QAM Game focus (stop AI) / AI focus (start stack)
     Do not use bonsAI Install Ollama — use the Distrobox unit
@@ -237,6 +242,8 @@ Common paths on Deck (persistent under $HOME)
     ~/.local/bin/ollama          CLI wrapper into ai-box
     ~/.config/containers/systemd/open-webui.container
     ~/containers/open-webui/     Open WebUI persistent state
+    ~/containers/{radarr,sonarr,prowlarr,bazarr}/  *arr config
+    ~/media/movies ~/media/tv ~/media/downloads    libraries (empty stubs OK)
     ~/homebrew/                  Decky Loader + plugins (QAM)
     ~/homebrew/plugins/bonsAI
     ~/homebrew/plugins/deck-focus
