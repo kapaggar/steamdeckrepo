@@ -64,6 +64,7 @@ Usage:  deck              this page
     deck ollama start|stop|restart
     deck box-ai            distrobox enter ai-box
     deck dev | deck box-dev  distrobox enter dev (Ubuntu 24.04 toolchain)
+    deck vscode            launch host VS Code (or: deck vscode install)
     warning: local inference competes with running games
     Do not use bonsAI Install Ollama — use the Distrobox unit
     QAM: Decky → Deck Focus → Game focus / AI focus
@@ -89,9 +90,10 @@ Usage:  deck              this page
     grok                   Grok AI terminal
     agent | cursor-agent   Cursor Agent CLI
     cursor                 Cursor IDE AppImage launcher
+    code                   VS Code (user Flatpak; Distrobox terminal + Continue)
 
   Desktop shortcuts
-    Grok CLI, Cursor Agent, Cursor IDE, Google Chrome, Open WebUI
+    Grok CLI, Cursor Agent, Cursor IDE, Visual Studio Code, Google Chrome, Open WebUI
 
   Browser login fix
     ~/.local/bin/xdg-open  opens http(s) in Chrome Flatpak (wrapper)
@@ -114,6 +116,7 @@ Usage:  deck              this page
     deck box               enter arch-tools Distrobox
     deck box-ai            enter ai-box Distrobox (Ollama)
     deck dev | deck box-dev  enter Ubuntu 24.04 Distrobox (toolchain; ~/src)
+    deck vscode            launch host VS Code (Continue → local Ollama)
     Persistent: ~/.local/bin ~/.grok ~/.config ~/Applications ~/containers ~/.ollama ~/src
     Disposable:  /usr (SteamOS image — do not install tools here)
 
@@ -151,6 +154,7 @@ On-Deck commands (run in Konsole on the Steam Deck)
     deck box               distrobox enter arch-tools
     deck box-ai            distrobox enter ai-box
     deck dev | deck box-dev  distrobox enter dev (Ubuntu toolchain)
+    deck vscode            host VS Code (or: deck vscode install)
     deck ai                local Ollama + Decky + Open WebUI status
     deck game | deck ai-off   Game focus (stop AI stack)
     deck ai-on                AI focus (start Ollama + Open WebUI)
@@ -168,16 +172,22 @@ Installed tools on Deck
   grok                   ~/.grok/bin/grok
   agent                  ~/.local/bin/agent
   cursor                 ~/.local/bin/cursor  → ~/Applications/cursor/
+  code                   ~/.local/bin/code → user Flatpak com.visualstudio.code
   protontricks           ~/.local/bin/protontricks → user Flatpak
   google-chrome          ~/.local/bin/google-chrome → Flatpak + Open WebUI new-tab
   retroarch              Steam library (steamapps/common/RetroArch)
 
-  Development (Distrobox dev — Ubuntu 24.04)
-    gcc / python3 / node / go   inside the box, not on SteamOS /usr
-    ~/src                       host project tree (shared $HOME; no container copies)
-    deck dev | deck box-dev     distrobox enter dev
-    IDE                         Cursor / VS Code on host Desktop; attach or distrobox-export
-    Independent of ai-box, Ollama, Open WebUI, Decky, Jellyfin
+  Development (host editors + Distrobox dev)
+    Cursor                 ~/Applications/cursor (cloud-heavy AI)
+    VS Code                user Flatpak; terminal profile distrobox-dev
+    Continue               ~/.continue → Ollama http://127.0.0.1:11434 qwen2.5:1.5b
+    gcc / python3 / node / go   inside Distrobox dev, not SteamOS /usr
+    kubectl / helm         ~/.local/bin (shared \$HOME)
+    ~/src                  host project tree (no container copies)
+    deck dev | deck vscode
+    Independent of ai-box, Open WebUI, Decky, Jellyfin
+    DOCKER_HOST=unix:///run/user/1000/podman/podman.sock
+    Do not start postgres/redis/localstack by default
 
   Local AI
     ollama                 ~/.local/bin/ollama → Distrobox ai-box
@@ -214,6 +224,8 @@ Common paths on Deck (persistent under $HOME)
   ~/.local/share/Steam/userdata/ saves
   ~/Downloads/                   Mac deckpush drop folder
   ~/src/                         Distrobox dev project tree (shared $HOME)
+  ~/.continue/                   Continue → local Ollama (VS Code)
+  ~/.var/app/com.visualstudio.code/  user Flatpak VS Code config
   /run/media/deck/               SD / USB (may change mount name)
 
   Local AI
@@ -249,6 +261,10 @@ Update-surviving SteamOS architecture
     deck bootstrap --with-container   also create arch-tools Distrobox
     deck bootstrap --with-ai          also create ai-box Distrobox
     deck bootstrap --with-dev         also create Ubuntu 24.04 Distrobox (dev)
+    bash ~/.config/steamdeck/install-vscode.sh     VS Code Flatpak + Continue
+    bash ~/.config/steamdeck/install-dev-clis.sh   kubectl + helm → ~/.local/bin
+    DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock
+    example-postgres / example-redis Quadlets are commented; do not enable
 
   Headless services at boot
     sudo loginctl enable-linger deck   (once, needs password)

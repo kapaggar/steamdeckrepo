@@ -72,6 +72,10 @@ deck() {
       shift
       deckdev "$@"
       ;;
+    vscode|code)
+      shift
+      deckvscode "$@"
+      ;;
     ai)
       shift
       deckai "$@"
@@ -296,6 +300,25 @@ deckboxai() {
 deckdev() {
   deckping || return 1
   _deck_ssh -t 'export PATH="/usr/bin:/bin:$HOME/.local/bin:$PATH"; distrobox enter dev'
+}
+
+deckvscode() {
+  deckping || return 1
+  if [[ "${1:-}" == install || "${1:-}" == --install ]]; then
+    shift
+    _deck_ssh "bash ~/.config/steamdeck/install-vscode.sh $(printf '%q ' "$@")"
+    return
+  fi
+  _deck_ssh 'export PATH="$HOME/.local/bin:/usr/bin:/bin:$PATH"
+    export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/1000}"
+    export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=${XDG_RUNTIME_DIR}/bus}"
+    if command -v code >/dev/null; then
+      nohup code >/tmp/deck-vscode.log 2>&1 &
+      echo "VS Code launch requested on Deck (Desktop Mode). log: /tmp/deck-vscode.log"
+    else
+      echo "code missing — run: deck vscode install" >&2
+      exit 1
+    fi'
 }
 
 deckai() {

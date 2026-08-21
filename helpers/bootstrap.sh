@@ -94,13 +94,24 @@ if [[ "${WITH_DEV}" -eq 1 && -n "${DB}" ]]; then
   fi
 fi
 
-# --- Quadlet example (not enabled by default) ---
-EXAMPLE="${H}/.config/containers/systemd/example.container"
-if [[ ! -f "${EXAMPLE}" ]]; then
-  cat > "${EXAMPLE}" << 'EOF'
-# Example Podman Quadlet — copy to myapp.container, edit, then:
+# --- Quadlet examples (commented; never enabled / never started) ---
+write_quadlet_example() {
+  local dest=$1
+  if [[ -f "${dest}" ]]; then
+    cat >/dev/null
+    return
+  fi
+  cat > "${dest}"
+  echo "quadlet example: ${dest} (commented; not enabled)"
+}
+
+write_quadlet_example "${H}/.config/containers/systemd/example.container" << 'EOF'
+# Example Podman Quadlet — copy to myapp.container, uncomment, then:
 #   systemctl --user daemon-reload
 #   systemctl --user enable --now myapp.service
+#
+# Do NOT enable this file as-is. Do not start postgres/redis/localstack
+# on the handheld by default (RAM).
 #
 # [Container]
 # Image=docker.io/vendor/app:latest
@@ -113,8 +124,49 @@ if [[ ! -f "${EXAMPLE}" ]]; then
 # [Install]
 # WantedBy=default.target
 EOF
-  echo "quadlet example: ${EXAMPLE}"
-fi
+
+write_quadlet_example "${H}/.config/containers/systemd/example-postgres.container" << 'EOF'
+# Example only — fully commented. Do not enable on this Deck by default.
+# Copy to postgres.container, uncomment, then:
+#   mkdir -p ~/containers/postgres
+#   systemctl --user daemon-reload
+#   systemctl --user start postgres.service
+# Bind localhost only. Stop before heavy games.
+#
+# [Container]
+# Image=docker.io/library/postgres:16
+# PublishPort=127.0.0.1:5432:5432
+# Volume=%h/containers/postgres:/var/lib/postgresql/data:Z
+# Environment=POSTGRES_USER=app
+# Environment=POSTGRES_PASSWORD=app
+# Environment=POSTGRES_DB=app
+#
+# [Service]
+# Restart=on-failure
+#
+# [Install]
+# WantedBy=default.target
+EOF
+
+write_quadlet_example "${H}/.config/containers/systemd/example-redis.container" << 'EOF'
+# Example only — fully commented. Do not enable on this Deck by default.
+# Copy to redis.container, uncomment, then:
+#   mkdir -p ~/containers/redis
+#   systemctl --user daemon-reload
+#   systemctl --user start redis.service
+# Bind localhost only. Stop before heavy games.
+#
+# [Container]
+# Image=docker.io/library/redis:7
+# PublishPort=127.0.0.1:6379:6379
+# Volume=%h/containers/redis:/data:Z
+#
+# [Service]
+# Restart=on-failure
+#
+# [Install]
+# WantedBy=default.target
+EOF
 
 # --- Reload user systemd if quadlets exist ---
 if compgen -G "${H}/.config/containers/systemd/"'*.container' >/dev/null 2>&1; then

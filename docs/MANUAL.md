@@ -2,7 +2,7 @@
 
 Owner guide for **सत्यBrave**. This is the single document for everything added on top of a **stock SteamOS** image on this Deck.
 
-**Last verified:** 2026-08-21 01:20 PDT, live SSH to `deck@10.0.0.143` (`distrobox` `dev` + `ai-box` + toolchain check). Hardware is **Galileo** (OLED). SteamOS **3.8.16** (`BUILD_ID=20260716.1`, branch `stable`, `steamos-readonly` **enabled**).
+**Last verified:** 2026-08-21, live SSH to `deck@10.0.0.143` (Distrobox `dev` + host VS Code Flatpak + Continue). Hardware is **Galileo** (OLED). SteamOS **3.8.16** (`BUILD_ID=20260716.1`, branch `stable`, `steamos-readonly` **enabled**).
 
 Related short notes: [architecture.md](architecture.md) (layout only) and the [repo README](../README.md) (Mac helpers). This manual is the operator book.
 
@@ -42,6 +42,9 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 | Distrobox CLI | `~/.local/bin/distrobox` (1.8.2.5) | yes | `deck bootstrap` reinstalls if missing |
 | Distrobox `ai-box` | `archlinux:latest` container, `$HOME` storage | yes (container store in `$HOME`) | `deck box-ai` / `distrobox enter ai-box` |
 | Distrobox `dev` | `ubuntu:24.04` container, `$HOME` + `~/src` | yes (container store in `$HOME`) | `deck dev` / `deck box-dev` / `distrobox enter dev` |
+| VS Code | user Flatpak `com.visualstudio.code` + `~/.local/bin/code` | yes | Desktop **Visual Studio Code**, `code`, `deck vscode` |
+| Continue | `~/.continue/` → Ollama `127.0.0.1:11434` | yes | VS Code Continue pane (does not start Ollama) |
+| kubectl / helm | `~/.local/bin` (official static bins) | yes | on PATH in `dev` (shared `$HOME`) |
 | Distrobox `arch-tools` | **not created** | — | Optional: `deck bootstrap --with-container` |
 | Ollama 0.32.14 | inside `ai-box`; models `~/.ollama` | yes | `deck ollama start\|stop\|restart` or `systemctl --user … ollama.service` |
 | `~/.local/bin/ollama` | Distrobox **wrapper** (must not be a host ELF) | yes | `ollama list` / `ollama pull …` |
@@ -151,6 +154,8 @@ deck bootstrap --with-ai
 deck box-ai            # distrobox enter ai-box
 deck dev               # distrobox enter dev (Ubuntu toolchain)
 deck box-dev           # same as deck dev
+deck vscode            # launch host VS Code on the Deck
+deck vscode install    # re-run Flatpak + Continue installer
 deck df                # disk + library sizes
 deck games             # steamapps/common folder names
 deck protontricks …    # Protontricks on the Deck (Flatpak wrapper)
@@ -252,72 +257,90 @@ First WebUI visit may ask you to create a **local** admin account. That stays on
 
 ---
 
-## 6. Development (Distrobox `dev`)
+## 6. Development and coding
 
-This is a **user-space Ubuntu toolbox** for compile and test work. It is **not** the AI stack and **not** Jellyfin. Do not stop `ai-box`, Ollama, Open WebUI, Decky, or a Jellyfin unit to use it. Game focus does **not** stop `dev`.
+Host editors + Distrobox toolchains. **Independent** of `ai-box`, Ollama, Open WebUI, Decky, and Jellyfin. Game focus does **not** stop `dev` or VS Code. SteamOS **`/usr` stays untouched.**
 
-SteamOS **`/usr` stays untouched.** The toolchain lives inside the box. Distrobox bind-mounts host `$HOME`, so there is **no container copy** of source.
+```
+SteamOS host
+├─ Cursor              → ~/Applications/cursor (cloud-heavy AI)
+├─ VS Code             → user Flatpak com.visualstudio.code
+│   └─ Continue        → local Ollama at 127.0.0.1:11434  (qwen2.5:1.5b)
+├─ Distrobox: dev      → ubuntu:24.04
+│   ├─ compilers / language runtimes / CLIs
+│   └─ kubectl / helm  → ~/.local/bin (shared $HOME)
+└─ rootless Podman
+    ├─ podman.socket user (enable --now)
+    └─ Quadlet examples for later project services (not started)
+```
+
+Project tree is host **`~/src`**. Distrobox bind-mounts `$HOME` — **no container copies** of source. Clone real repos as `~/src/<name>`.
+
+### Distrobox `dev`
 
 | | |
 | --- | --- |
 | Name | `dev` |
 | Image | `ubuntu:24.04` (`docker.io/library/ubuntu:24.04`) |
 | Home | host `$HOME` (`/home/deck`) |
-| Project tree | `~/src` on the host. Clone real repos as `~/src/<name>`. Do not invent placeholder projects. |
-| Independent of | `ai-box` (Ollama), Open WebUI, Decky, Jellyfin |
+| Enter (Deck) | `deck dev` / `deck box-dev` / `distrobox enter dev` |
+| Enter (Mac) | `deck dev` / `deck box-dev` |
 
-### Enter
+Packages inside the box (apt, not SteamOS): `build-essential` `git` `curl` `python3` `python3-venv` `nodejs` `npm` `golang-go`, plus `ca-certificates` `unzip` `jq` `ripgrep` `fd-find` (`fdfind`).
 
-On the Deck (Desktop Konsole):
+`kubectl` / `helm` are **not** in Ubuntu 24.04 repos. Official static binaries live in `~/.local/bin` (visible in the box). Reinstall: `bash ~/.config/steamdeck/install-dev-clis.sh`.
 
-```bash
-deck dev
-# same:
-deck box-dev
-distrobox enter dev
-```
+Do **not** `apt install` VS Code inside the box (snap-heavy). rustup was skipped; install later inside `dev` if you want Rust.
 
-From the Mac:
+If `dev` already exists, **reuse it**. Never recreate `ai-box` for this.
 
 ```bash
-deck dev
-# same:
-deck box-dev
-```
-
-That SSHs in and runs `distrobox enter dev`.
-
-### Packages (inside the box, apt)
-
-Required: `build-essential` `git` `curl` `python3` `python3-venv` `nodejs` `npm` `golang-go`
-
-Extras from Ubuntu repos: `ca-certificates` `unzip` `jq` `ripgrep` `fd-find` (binary is `fdfind`)
-
-Do **not** `apt install` VS Code or Cursor inside the box (snap-heavy). Use **host Desktop** Cursor (`~/Applications/cursor`, already installed) or VS Code, then attach to the Distrobox, or `distrobox-export` a CLI onto the host PATH.
-
-Optional rustup (user-space inside the box) was skipped. Install later if you want Rust:
-
-```bash
-# inside `dev` only
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-### Recreate if missing
-
-If `dev` already exists, **reuse it** and only install missing packages. Never recreate `ai-box` for this.
-
-```bash
-# on Deck (non-interactive)
 distrobox create --name dev --image ubuntu:24.04 --yes
-distrobox enter -T dev -- sudo env DEBIAN_FRONTEND=noninteractive \
-  apt-get update
-distrobox enter -T dev -- sudo env DEBIAN_FRONTEND=noninteractive \
-  apt-get install -y build-essential git curl python3 python3-venv \
-  nodejs npm golang-go ca-certificates unzip jq ripgrep fd-find
-
-# or, after helpers are synced (creates the box only):
-deck bootstrap --with-dev
+deck bootstrap --with-dev    # create only, if missing
 ```
+
+### VS Code (host)
+
+User Flatpak — not `/usr`, not snap. Filesystem override `home` so it sees `~/src` and Distrobox. Terminals enter the box via **`flatpak-spawn --host`** (sandbox cannot run host `podman` directly).
+
+| | |
+| --- | --- |
+| Launch | Desktop **Visual Studio Code**, `code`, or `deck vscode` (Mac or Deck) |
+| Reinstall | `deck vscode install` / `bash ~/.config/steamdeck/install-vscode.sh` |
+| Terminal profile | **`distrobox-dev`** (default) → `distrobox enter dev` |
+| Settings | `~/.var/app/com.visualstudio.code/config/Code/User/settings.json` |
+
+Cursor stays the cloud-heavy AI editor (`~/Applications/cursor`). Use VS Code when you want Continue against **local** Ollama.
+
+### Continue → local Ollama
+
+| | |
+| --- | --- |
+| Extension | `Continue.continue` |
+| Config | `~/.continue/config.yaml` (current) and `~/.continue/config.json` (legacy) |
+| Provider | `ollama` |
+| URL | `http://127.0.0.1:11434` |
+| Model | `qwen2.5:1.5b` (already pulled) |
+
+**Do not** bind Ollama on `0.0.0.0`. Continue does not start the server — `deck ollama start` / QAM AI focus if it is down. First workspace index is leftover: open a folder under `~/src` and let Continue index once.
+
+### Podman socket (Docker-compatible API)
+
+```bash
+systemctl --user enable --now podman.socket   # already on this Deck
+export DOCKER_HOST=unix:///run/user/1000/podman/podman.sock
+# or: unix:///run/user/$(id -u)/podman/podman.sock
+```
+
+Docker-API compatible **≠** every Docker VS Code extension works (Portainer / Docker Desktop assumptions). Prefer `podman` / Quadlets.
+
+Commented Quadlet examples (not enabled, not started — no surprise RAM):
+
+- `~/.config/containers/systemd/example.container`
+- `~/.config/containers/systemd/example-postgres.container`
+- `~/.config/containers/systemd/example-redis.container`
+
+Copy, uncomment, `systemctl --user daemon-reload`, then `start` only when a project needs them. Bind `127.0.0.1`. Do **not** start postgres / redis / localstack by default.
 
 ---
 
@@ -332,6 +355,7 @@ Switch to **Desktop Mode** for these. Game Mode can launch some of them via Stea
 | Grok CLI | yes | yes | Konsole → `grok` |
 | Cursor Agent | yes | yes | Konsole → `agent` |
 | Cursor | yes | yes | `~/.local/bin/cursor` (extracted AppImage, `--no-sandbox`) |
+| Visual Studio Code | yes | yes | `~/.local/bin/code` → user Flatpak; terminal **distrobox-dev** |
 | Google Chrome | yes (**our** launcher, not the Discover symlink) | yes | Flatpak Chrome + `--load-extension` (Open WebUI new tab) |
 | Open WebUI | yes | yes | `~/.local/bin/google-chrome http://127.0.0.1:3000` |
 
@@ -390,6 +414,7 @@ agent status
 | `~/Applications/Shadps4-qt.AppImage` | PS4 |
 | `~/Applications/Vita3K/` | PS Vita |
 | `~/.local/bin/cursor` | launcher |
+| `~/.local/bin/code` | VS Code user Flatpak wrapper |
 | `~/.local/bin/emudeck` | launcher |
 | `~/.local/bin/agent` / `cursor-agent` | Cursor Agent |
 | `~/.local/bin/google-chrome` | Flatpak Chrome + Open WebUI new-tab extension |
@@ -470,6 +495,7 @@ From the Mac: `deck protontricks -q 1243830 vcrun2019`. Extra library on an SD c
 | User Flatpaks | **Keeps** | EmuDeck emulators |
 | System Flatpaks | **Usually keeps** (`/var`) | Chrome, Firefox — still confirm after a big SteamOS jump |
 | Distrobox / Podman storage | **Keeps** (`~/.local/share/containers`) | `ai-box`, `dev`, Open WebUI image layers |
+| User Flatpak VS Code | **Keeps** (`~/.local/share/flatpak`) | `com.visualstudio.code` + `~/.continue` |
 | This git repo | Mac only | Helpers are copied to the Deck; git metadata is not |
 
 **Wiped or broken after a typical SteamOS update:**
@@ -616,6 +642,8 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | Leave Open WebUI up for AAA games | ~2 GiB+ and CPU; QAM **Deck Focus → Game focus** or `deck game` first. |
 | Stop or recreate `ai-box` / Jellyfin / Ollama for `dev` work | They are independent. `dev` only shares `$HOME`. |
 | `apt install` VS Code / Cursor inside `dev` | Snap-heavy. Use host Desktop Cursor / VS Code and attach, or `distrobox-export`. |
+| Enable postgres / redis / localstack Quadlets by default | Surprise RAM on a handheld. Examples stay commented. |
+| Bind Ollama on `0.0.0.0` so Continue can “reach it from the Mac” | Use SSH `-L 11434` instead. |
 
 ---
 
@@ -634,4 +662,5 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | After SteamOS update | `deck bootstrap` → Decky `install-decky.sh` → restart Game Mode → `deck audit` |
 | After editing helpers | `rsync` `helpers/` → `deck@10.0.0.143:~/.config/steamdeck/` |
 | Compile / git / node / go | `deck dev` (or `deck box-dev`); projects in `~/src` |
+| Edit with local Ollama | Desktop **Visual Studio Code** / `deck vscode`; Continue → `127.0.0.1:11434` |
 | Install Protontricks / VC++ for a Proton game | `bash ~/.config/steamdeck/install-protontricks.sh`; then `protontricks -q <appid> vcrun2019` (§9) |

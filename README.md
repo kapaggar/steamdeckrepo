@@ -22,6 +22,8 @@ helpers/                 Mac + Deck scripts
   install-decky.sh       Finish Decky Loader after SteamOS updates
   install-chrome-open-webui.sh  Chrome bookmark + new-tab button for WebUI
   install-protontricks.sh  user Flatpak Protontricks + optional vcrun verbs
+  install-vscode.sh        user Flatpak VS Code + Continue → local Ollama
+  install-dev-clis.sh      kubectl + helm → ~/.local/bin
   chrome-open-webui-newtab/     unpacked MV3 extension source
 plugins/deck-focus/      Decky QAM plugin (Game focus / AI focus)
 docs/architecture.md     $HOME-first, Distrobox, Ollama, Decky, Open WebUI
@@ -39,6 +41,7 @@ deck ai            # local AI status
 deck game          # stop AI stack before a game
 deck ai-on         # start Ollama + Open WebUI again
 deck dev           # Distrobox Ubuntu 24.04 toolchain (also: deck box-dev)
+deck vscode        # host VS Code (Continue → local Ollama)
 ```
 
 Override the target with `STEAMDECK_HOST`, `STEAMDECK_USER`, or `STEAMDECK_SSH`.

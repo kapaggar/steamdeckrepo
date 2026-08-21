@@ -6,6 +6,9 @@ export STEAM_COMMON="${STEAM_STEAMAPPS}/common"
 export STEAM_USERDATA="${HOME}/.local/share/Steam/userdata"
 export STEAM_DOWNLOADS="${HOME}/Downloads"
 
+# User Flatpak exports (VS Code) — stock XDG_DATA_DIRS often omits this
+export XDG_DATA_DIRS="${HOME}/.local/share/flatpak/exports/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
 alias games='ls -1 "${STEAM_COMMON}" 2>/dev/null | sort'
 alias steamapps='cd "${STEAM_STEAMAPPS}" && pwd && ls -la'
 alias saves='cd "${STEAM_USERDATA}" && pwd && ls -la'
@@ -58,6 +61,21 @@ deckdev() {
   [[ -n "${db}" ]] || { echo "distrobox not found — run: deck bootstrap" >&2; return 1; }
   export PATH="/usr/bin:/bin:${HOME}/.local/bin:${PATH}"
   exec "${db}" enter dev "$@"
+}
+
+deckvscode() {
+  export PATH="${HOME}/.local/bin:/usr/bin:/bin:${PATH}"
+  if [[ "${1:-}" == install || "${1:-}" == --install ]]; then
+    shift
+    bash "${HOME}/.config/steamdeck/install-vscode.sh" "$@"
+    return
+  fi
+  if ! command -v code >/dev/null; then
+    echo "code missing — run: deck vscode install" >&2
+    return 1
+  fi
+  nohup code "$@" >/tmp/deck-vscode.log 2>&1 &
+  echo "VS Code launched (Desktop Mode). log: /tmp/deck-vscode.log"
 }
 
 deckai() {
@@ -165,6 +183,10 @@ deck() {
     dev|box-dev)
       shift
       deckdev "$@"
+      ;;
+    vscode|code)
+      shift
+      deckvscode "$@"
       ;;
     ai)
       shift

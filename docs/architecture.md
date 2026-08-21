@@ -89,7 +89,30 @@ systemctl --user daemon-reload
 systemctl --user enable --now myapp.service
 ```
 
-`bootstrap.sh` writes a commented `example.container` if missing.
+`bootstrap.sh` writes commented `example.container`, `example-postgres.container`, and `example-redis.container` if missing. Do **not** enable postgres/redis/localstack by default (handheld RAM).
+
+Docker-compatible API (not every Docker extension works):
+
+```
+systemctl --user enable --now podman.socket
+export DOCKER_HOST=unix:///run/user/1000/podman/podman.sock
+```
+
+## Development and coding
+
+```
+SteamOS host
+├─ Cursor              → ~/Applications/cursor (cloud-heavy AI)
+├─ VS Code             → user Flatpak; Continue → 127.0.0.1:11434
+├─ Distrobox: dev      → ubuntu:24.04 (gcc/python/node/go; ~/src)
+└─ rootless Podman     → podman.socket; Quadlet examples only
+```
+
+```
+deck dev
+deck vscode
+deck vscode install
+```
 
 ## What this repo does not store
 

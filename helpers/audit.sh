@@ -42,6 +42,7 @@ echo "── User CLIs (~/.local/bin, ~/.grok/bin) ──"
 _check_exec grok "${H}/.grok/bin/grok"
 _check_exec agent "${H}/.local/bin/agent"
 _check_exec cursor "${H}/.local/bin/cursor"
+_check_exec code "${H}/.local/bin/code"
 _check_exec xdg-open "${H}/.local/bin/xdg-open"
 _check_exec emudeck "${H}/.local/bin/emudeck"
 if [[ -x "${H}/.local/bin/distrobox" ]]; then
@@ -93,8 +94,8 @@ if [[ -n "${DB}" ]]; then
   fi
 fi
 
-quadlets=$(find "${H}/.config/containers/systemd" -name '*.container' ! -name 'example.container' 2>/dev/null | wc -l | tr -d ' ')
-[[ "${quadlets}" -gt 0 ]] && _pass "${quadlets} active quadlet(s)" || _warn "no custom quadlets (see ~/.config/containers/systemd/example.container)"
+quadlets=$(find "${H}/.config/containers/systemd" -name '*.container' ! -name 'example*' 2>/dev/null | wc -l | tr -d ' ')
+[[ "${quadlets}" -gt 0 ]] && _pass "${quadlets} active quadlet(s)" || _warn "no custom quadlets (see ~/.config/containers/systemd/example*.container)"
 
 usvc=$(systemctl --user list-unit-files --type=service --state=enabled 2>/dev/null | wc -l | tr -d ' ')
 echo "  … ${usvc} enabled user systemd units"
@@ -221,6 +222,33 @@ fi
   || _warn "missing ~/.local/bin/protontricks"
 [[ -x "${H}/.config/steamdeck/install-protontricks.sh" ]] && _pass "install-protontricks.sh" \
   || _warn "missing install-protontricks.sh"
+
+echo
+echo "── VS Code + Continue (local Ollama) ──"
+if command -v flatpak >/dev/null 2>&1 && flatpak --user info com.visualstudio.code >/dev/null 2>&1; then
+  _pass "VS Code Flatpak $(flatpak --user info com.visualstudio.code 2>/dev/null | awk -F': *' '/^[[:space:]]*Version:/{print $2; exit}')"
+else
+  _warn "VS Code Flatpak missing (run: bash ~/.config/steamdeck/install-vscode.sh)"
+fi
+[[ -x "${H}/.local/bin/code" ]] && _pass "code wrapper (~/.local/bin)" \
+  || _warn "missing ~/.local/bin/code"
+if [[ -f "${H}/.var/app/com.visualstudio.code/config/Code/User/settings.json" ]] \
+  && grep -q 'distrobox-dev' "${H}/.var/app/com.visualstudio.code/config/Code/User/settings.json"; then
+  _pass "VS Code terminal profile distrobox-dev"
+else
+  _warn "VS Code missing distrobox-dev profile"
+fi
+if [[ -f "${H}/.continue/config.yaml" ]] || [[ -f "${H}/.continue/config.json" ]]; then
+  _pass "~/.continue → Ollama 127.0.0.1:11434"
+else
+  _warn "missing ~/.continue config (Continue → local Ollama)"
+fi
+[[ -x "${H}/.local/bin/kubectl" ]] && _pass "kubectl (~/.local/bin)" \
+  || _warn "no kubectl (optional: bash ~/.config/steamdeck/install-dev-clis.sh)"
+[[ -x "${H}/.local/bin/helm" ]] && _pass "helm (~/.local/bin)" \
+  || _warn "no helm (optional: bash ~/.config/steamdeck/install-dev-clis.sh)"
+[[ -x "${H}/.config/steamdeck/install-vscode.sh" ]] && _pass "install-vscode.sh" \
+  || _warn "missing install-vscode.sh"
 
 echo
 echo "── Shell helpers ──"
