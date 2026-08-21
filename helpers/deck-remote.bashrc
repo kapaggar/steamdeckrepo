@@ -56,6 +56,14 @@ deckai() {
   bash "${HOME}/.config/steamdeck/ai-status.sh"
 }
 
+deckgamefocus() {
+  bash "${HOME}/.config/steamdeck/game-focus.sh"
+}
+
+deckaifocus() {
+  bash "${HOME}/.config/steamdeck/ai-focus.sh"
+}
+
 deckwebui() {
   local sub=${1:-status}
   case "${sub}" in
@@ -149,6 +157,14 @@ deck() {
     ai)
       shift
       deckai "$@"
+      ;;
+    game|game-focus|ai-off)
+      shift
+      deckgamefocus "$@"
+      ;;
+    ai-on|ai-focus)
+      shift
+      deckaifocus "$@"
       ;;
     ollama)
       shift

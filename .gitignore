@@ -43,6 +43,10 @@ decky-installer*
 # Deck-only runtime markers
 ollama-managed-by-distrobox
 
+# Plugin build
+plugins/**/node_modules/
+plugins/**/dist/*.map
+
 # OS junk
 .DS_Store
 *~

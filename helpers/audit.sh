@@ -138,6 +138,10 @@ fi
 [[ -f "${H}/homebrew/plugins/bonsAI/plugin.json" ]] && _pass "bonsAI plugin" || _warn "bonsAI missing"
 [[ -f "${H}/homebrew/plugins/decky-ollama/plugin.json" ]] && _pass "decky-ollama plugin" \
   || _warn "decky-ollama missing"
+[[ -f "${H}/homebrew/plugins/deck-focus/plugin.json" ]] && _pass "deck-focus plugin" \
+  || _warn "deck-focus missing"
+[[ -x "${H}/.config/steamdeck/game-focus.sh" ]] && _pass "game-focus.sh" || _warn "missing game-focus.sh"
+[[ -x "${H}/.config/steamdeck/ai-focus.sh" ]] && _pass "ai-focus.sh" || _warn "missing ai-focus.sh"
 
 # Host /usr must stay SteamOS-owned. Ollama lives in the container.
 if [[ -e /usr/local/bin/ollama || -e /usr/bin/ollama ]]; then

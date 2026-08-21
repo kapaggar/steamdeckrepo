@@ -1,0 +1,11 @@
+{
+  "name": "Deck Focus",
+  "author": "सत्यBrave",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": ["focus", "ollama", "game"],
+    "description": "QAM buttons to stop the local AI stack before a game, then start Ollama and Open WebUI again.",
+    "image": ""
+  }
+}

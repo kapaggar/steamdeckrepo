@@ -32,7 +32,7 @@ Or, if you want to grant passwordless sudo first (optional, persists in /etc):
 
 After install:
   1. Restart Game Mode (or reboot) so the QAM plug icon appears.
-  2. QAM (… ) → Decky plug → enable bonsAI and decky-ollama if needed.
+  2. QAM (… ) → Decky plug → enable bonsAI, decky-ollama, and Deck Focus if needed.
   3. bonsAI → Ollama → set base URL http://127.0.0.1:11434
   4. Do not use bonsAI Install Ollama — use the Distrobox unit
      (systemctl --user start ollama.service). Chat UI is fine; skip install/update.

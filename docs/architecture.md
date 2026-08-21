@@ -71,8 +71,9 @@ SSH tunnel from the Mac if you need the UI remotely. Do not publish it on the LA
 
 - User-space tree: `~/homebrew/` (PluginLoader + plugins)
 - System unit: `plugin_loader.service` (SteamOS updates can drop `/etc` units)
-- Plugins: bonsAI (chat UI) and decky-ollama (must talk to `127.0.0.1` + the user `ollama.service`)
-- After a SteamOS image update, re-run `helpers/install-decky.sh` on the Deck
+- Plugins: bonsAI (chat UI), decky-ollama (must talk to `127.0.0.1` + the user `ollama.service`), and Deck Focus (QAM stop/start of the AI stack)
+- Deck Focus backend runs `~/.config/steamdeck/game-focus.sh` / `ai-focus.sh` as user `deck` (PluginLoader is root; it uses `runuser -u deck`)
+- After a SteamOS image update, re-run `helpers/install-decky.sh` on the Deck and recopy `plugins/deck-focus/`
 - Restart Game Mode once if the QAM plug icon is missing
 
 bonsAI chat is fine. Skip bonsAI install/update of Ollama; keep `decky-ollama` from binding `0.0.0.0` or `pkill`ing the Distrobox unit.

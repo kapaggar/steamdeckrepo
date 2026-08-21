@@ -17,9 +17,12 @@ helpers/                 Mac + Deck scripts
   bootstrap.sh           $HOME-first bootstrap (podman, distrobox, optional boxes)
   audit.sh               Update-surviving layout checklist
   ai-status.sh           Ollama + Decky + Open WebUI status
+  game-focus.sh          STOP: Ollama + Open WebUI + our AI containers
+  ai-focus.sh            START: ollama.service, wait for :11434, then WebUI
   install-decky.sh       Finish Decky Loader after SteamOS updates
   install-chrome-open-webui.sh  Chrome bookmark + new-tab button for WebUI
   chrome-open-webui-newtab/     unpacked MV3 extension source
+plugins/deck-focus/      Decky QAM plugin (Game focus / AI focus)
 docs/architecture.md     $HOME-first, Distrobox, Ollama, Decky, Open WebUI
 ```
 
@@ -32,6 +35,8 @@ deck help          # Mac + Deck command map
 deck ping          # SSH reachability
 deck ssh           # interactive shell on the Deck
 deck ai            # local AI status
+deck game          # stop AI stack before a game
+deck ai-on         # start Ollama + Open WebUI again
 ```
 
 Override the target with `STEAMDECK_HOST`, `STEAMDECK_USER`, or `STEAMDECK_SSH`.

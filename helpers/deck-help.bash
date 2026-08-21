@@ -53,6 +53,9 @@ Usage:  deck              this page
 
   Local AI (Ollama in Distrobox ai-box)
     deck ai                ollama + ai-box + Decky + Open WebUI status
+    deck game              Game focus: stop Ollama + Open WebUI (QAM STOP)
+    deck ai-off            same as deck game
+    deck ai-on             AI focus: start Ollama, then Open WebUI (QAM START)
     deck webui             Open WebUI URL http://127.0.0.1:3000
     deck webui start|stop|restart|logs
     deck ollama            same + user-unit status
@@ -61,6 +64,7 @@ Usage:  deck              this page
     deck box-ai            distrobox enter ai-box
     warning: local inference competes with running games
     Do not use bonsAI Install Ollama — use the Distrobox unit
+    QAM: Decky → Deck Focus → Game focus / AI focus
 
   Env overrides
     STEAMDECK_HOST  STEAMDECK_USER  STEAMDECK_SSH
@@ -142,9 +146,12 @@ On-Deck commands (run in Konsole on the Steam Deck)
     deck box               distrobox enter arch-tools
     deck box-ai            distrobox enter ai-box
     deck ai                local Ollama + Decky + Open WebUI status
+    deck game | deck ai-off   Game focus (stop AI stack)
+    deck ai-on                AI focus (start Ollama + Open WebUI)
     deck webui             Open WebUI http://127.0.0.1:3000
     deck ollama            ollama.service status / logs / start|stop
     Do not use bonsAI Install Ollama — use the Distrobox unit
+    QAM: Decky → Deck Focus
 EOF
 }
 
@@ -163,6 +170,7 @@ Installed tools on Deck
     ollama.service         user systemd (OLLAMA_HOST=127.0.0.1:11434)
     Open WebUI             http://127.0.0.1:3000  (Quadlet; Chrome new tab / bookmark)
     Decky + bonsAI         QAM chat (plugin_loader.service; restart Game Mode for QAM icon)
+    Decky Deck Focus       QAM Game focus (stop AI) / AI focus (start stack)
     Do not use bonsAI Install Ollama — use the Distrobox unit
 
   Login
@@ -201,7 +209,10 @@ Common paths on Deck (persistent under $HOME)
     ~/containers/open-webui/     Open WebUI persistent state
     ~/homebrew/                  Decky Loader + plugins (QAM)
     ~/homebrew/plugins/bonsAI
+    ~/homebrew/plugins/deck-focus
     ~/Downloads/decky-plugins/   staged zips / decky-ollama source
+    ~/.config/steamdeck/game-focus.sh
+    ~/.config/steamdeck/ai-focus.sh
 EOF
 }
 
@@ -235,6 +246,7 @@ Update-surviving SteamOS architecture
     models persist in ~/.ollama
     Open WebUI at http://127.0.0.1:3000 (rootless Quadlet, pasta host-loopback)
     Decky Ollama + bonsAI for Gaming Mode QAM
+    Deck Focus QAM buttons stop/start the stack (game-focus.sh / ai-focus.sh)
     Do not use bonsAI Install Ollama — use the Distrobox unit
     warning: local inference competes with running games
     GPU later (do not enable ROCm): drop OLLAMA_NO_GPU=1,

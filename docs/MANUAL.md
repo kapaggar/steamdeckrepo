@@ -37,7 +37,7 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 
 | Item | Where it lives | Survives SteamOS update? | How to start / stop |
 | --- | --- | --- | --- |
-| This repo’s helpers (Deck copy) | `~/.config/steamdeck/` (real files, not Mac symlinks) | yes | `source ~/.bashrc` (already wired). Resync from Mac after edits. |
+| This repo’s helpers (Deck copy) | `~/.config/steamdeck/` (real files, not Mac symlinks) | yes | `source ~/.bashrc` (already wired). Resync from Mac after edits. Includes `game-focus.sh` / `ai-focus.sh`. |
 | Mac control plane | `~/.config/steamdeck` → `/Users/wizops/DIPI/steam/helpers/` | n/a (Mac) | `source ~/.bashrc` then `deck …` |
 | Distrobox CLI | `~/.local/bin/distrobox` (1.8.2.5) | yes | `deck bootstrap` reinstalls if missing |
 | Distrobox `ai-box` | `archlinux:latest` container, `$HOME` storage | yes (container store in `$HOME`) | `deck box-ai` / `distrobox enter ai-box` |
@@ -50,6 +50,7 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 | Decky Loader v3.2.6 | `~/homebrew/` + **system** `plugin_loader.service` | tree yes; **unit re-check** | `sudo systemctl start\|stop plugin_loader`; after updates: `install-decky.sh` |
 | bonsAI 0.4.9 | `~/homebrew/plugins/bonsAI` | yes | Enable in QAM (Decky plug). Chat only. |
 | decky-ollama (patched) | `~/homebrew/plugins/decky-ollama` | yes | QAM start/stop → user `ollama.service` on `127.0.0.1` |
+| Deck Focus | `~/homebrew/plugins/deck-focus` | yes | QAM **Game focus (stop AI)** / **AI focus (start stack)** → `game-focus.sh` / `ai-focus.sh` |
 | Cursor Agent CLI | `~/.local/bin/agent` → `~/.local/share/cursor-agent/` (2026.08.11-e8db854) | yes | Desktop **Cursor Agent**, or `agent` / `deckagent` |
 | Cursor IDE | `~/Applications/cursor/Cursor-3.16.29-x86_64.AppImage` + `~/.local/bin/cursor` | yes | Desktop **Cursor** |
 | Grok CLI | `~/.grok/bin/grok` (1.0.5) | yes | Desktop **Grok CLI**, or `grok` / `deckgrok` |
@@ -135,6 +136,9 @@ deck help              # full map
 deck ping              # SSH reachability (alias: dping)
 deck ssh               # interactive shell (aliases: decksh, dsh)
 deck ai                # Ollama + Decky + Open WebUI status
+deck game              # Game focus: stop Ollama + Open WebUI (same as QAM STOP)
+deck ai-off            # same as deck game
+deck ai-on             # AI focus: start Ollama, then Open WebUI (same as QAM START)
 deck ollama            # status + user unit
 deck ollama start|stop|restart|logs
 deck webui             # http://127.0.0.1:3000 + status
@@ -216,8 +220,12 @@ ollama pull qwen2.5:1.5b
 ### Decky QAM
 
 - **Loader:** v3.2.6, `~/homebrew/services/PluginLoader`, system unit `plugin_loader.service` (`/etc/systemd/system/`).
-- **Plugins running:** bonsAI, decky-ollama (both under `~/homebrew/plugins/`).
+- **Plugins running:** bonsAI, decky-ollama, **Deck Focus** (all under `~/homebrew/plugins/`).
 - **QAM:** Game Mode → … (Quick Access) → plug icon. If the icon is missing, **restart Game Mode once** (or reboot).
+- **Deck Focus:** QAM → Decky → **Deck Focus**. Two large buttons:
+  - **Game focus (stop AI)** — runs `~/.config/steamdeck/game-focus.sh` as user `deck` (not root). Stops `open-webui.service`, `ollama.service`, then our rootless Podman containers `open-webui` and `ai-box`. Does **not** stop Steam, `plugin_loader`, Flatpak Chrome/Firefox, or `sdgyrodsu`.
+  - **AI focus (start stack)** — runs `~/.config/steamdeck/ai-focus.sh` as `deck`. Starts `ollama.service`, waits until `127.0.0.1:11434` answers, then starts `open-webui.service`.
+  Same actions from the Mac: `deck game` / `deck ai-off` (stop) and `deck ai-on` (start). Plugin source lives in this repo at `plugins/deck-focus/`.
 - **bonsAI:** chat UI pointed at `http://127.0.0.1:11434`. **Never tap Install Ollama or Update installed.** That drops a host tarball in `~/.local/lib/ollama` (~2 GiB CUDA/Vulkan junk) and fights `ai-box`.
 - **decky-ollama:** patched so start/stop is `systemctl --user start|stop ollama.service` and the API is `127.0.0.1:11434`. It must **not** reinstall host Ollama, bind `0.0.0.0`, or `pkill` the Distrobox server. If a plugin update reverts that, restore the patched `main.py` and re-check `deck ai`.
 
@@ -367,23 +375,27 @@ Typical owner workflow:
 ```bash
 # from Mac
 deck ping
-deck ollama start
-deck webui start
+deck ai-on
 deck ai
 ```
 
-On the Deck: Game Mode QAM → Decky → bonsAI (chat) and/or Chrome → `http://127.0.0.1:3000`.
+On the Deck: Game Mode QAM → Decky → **Deck Focus → AI focus (start stack)**, then bonsAI (chat) and/or Chrome → `http://127.0.0.1:3000`. From the Mac: `deck ai-on`.
 
 ### Stop before heavy games
 
 Local inference and Open WebUI steal RAM and CPU from Gamescope.
 
+**In Game Mode:** QAM → … → Decky plug → **Deck Focus** → **Game focus (stop AI)**.
+
+From the Mac (same scripts):
+
 ```bash
-deck webui stop
-deck ollama stop
+deck game          # or: deck ai-off
+# equivalent:
+#   deck webui stop && deck ollama stop
 ```
 
-Leave Decky running (small). Start Ollama again when you want QAM chat. If a game is already stuttering, stop WebUI first (it was the large one).
+Leave Decky running (small). Start the stack again with QAM **AI focus (start stack)** or `deck ai-on` when you want QAM chat. If a game is already stuttering, stop WebUI first (it was the large one). Deck Focus does not kill Steam or the QAM plug.
 
 ### Reboot checks (30 seconds)
 
@@ -446,7 +458,7 @@ That script needs working sudo (`sudo -n true`). Then **restart Game Mode**. In 
 
 ### Resync this repo → Deck
 
-After you pull or edit on the Mac, only `helpers/` needs to land on the Deck (see rsync above). Then `deck audit`.
+After you pull or edit on the Mac, `helpers/` needs to land on the Deck (see rsync above). After Deck Focus edits, also copy `plugins/deck-focus/` (skip `node_modules`) to `~/homebrew/plugins/deck-focus/` and `sudo systemctl restart plugin_loader`. Then `deck audit`.
 
 ### Recreate Open WebUI
 
@@ -483,7 +495,7 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | Symlink the Deck’s `~/.config/steamdeck` at the Mac repo | SteamOS `$HOME` should keep real files. |
 | Commit secrets into this repo | No `auth.json`, sudoers copies, `~/.grok` state, keys, models, AppImages. |
 | Use piracy / SteamRIP / random “ROM packs” | Legal dumps and BIOS only (§7). |
-| Leave Open WebUI up for AAA games | ~2 GiB+ and CPU; `deck webui stop` first. |
+| Leave Open WebUI up for AAA games | ~2 GiB+ and CPU; QAM **Deck Focus → Game focus** or `deck game` first. |
 
 ---
 
@@ -494,8 +506,10 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | See if the Deck is up | `deck ping` |
 | See if AI is healthy | `deck ai` / `deck audit` |
 | Chat in Game Mode | QAM → Decky → bonsAI (Ollama must be running) |
+| Stop AI before a game | QAM → Decky → **Deck Focus** → Game focus, or `deck game` |
+| Start AI stack again | QAM → Decky → **Deck Focus** → AI focus, or `deck ai-on` |
 | Chat like ChatGPT | Desktop **Google Chrome** (our icon) → new tab button or bookmarks bar **Open WebUI** |
 | Use WebUI from the Mac | `ssh -L 3000:127.0.0.1:3000 deck@10.0.0.143` |
-| Free resources for a game | `deck webui stop` and `deck ollama stop` |
+| Free resources for a game | `deck game` (or `deck webui stop` and `deck ollama stop`) |
 | After SteamOS update | `deck bootstrap` → Decky `install-decky.sh` → restart Game Mode → `deck audit` |
 | After editing helpers | `rsync` `helpers/` → `deck@10.0.0.143:~/.config/steamdeck/` |

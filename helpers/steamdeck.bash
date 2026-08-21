@@ -72,6 +72,14 @@ deck() {
       shift
       deckai "$@"
       ;;
+    game|game-focus|ai-off)
+      shift
+      deckgamefocus "$@"
+      ;;
+    ai-on|ai-focus)
+      shift
+      deckaifocus "$@"
+      ;;
     ollama)
       shift
       deckollama "$@"
@@ -270,6 +278,16 @@ deckboxai() {
 deckai() {
   deckping || return 1
   _deck_ssh 'bash ~/.config/steamdeck/ai-status.sh'
+}
+
+deckgamefocus() {
+  deckping || return 1
+  _deck_ssh 'bash ~/.config/steamdeck/game-focus.sh'
+}
+
+deckaifocus() {
+  deckping || return 1
+  _deck_ssh 'bash ~/.config/steamdeck/ai-focus.sh'
 }
 
 deckwebui() {

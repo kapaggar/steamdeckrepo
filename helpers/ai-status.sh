@@ -78,6 +78,10 @@ fi
 [[ -f "${H}/homebrew/plugins/bonsAI/plugin.json" ]] && _ok "plugin: bonsAI" || _no "plugin missing: bonsAI"
 [[ -f "${H}/homebrew/plugins/decky-ollama/plugin.json" ]] && _ok "plugin: decky-ollama (127.0.0.1 + user ollama.service)" \
   || _no "plugin missing: decky-ollama"
+[[ -f "${H}/homebrew/plugins/deck-focus/plugin.json" ]] && _ok "plugin: deck-focus (QAM Game/AI focus)" \
+  || _no "plugin missing: deck-focus"
+[[ -x "${H}/.config/steamdeck/game-focus.sh" ]] && _ok "game-focus.sh" || _no "missing game-focus.sh"
+[[ -x "${H}/.config/steamdeck/ai-focus.sh" ]] && _ok "ai-focus.sh" || _no "missing ai-focus.sh"
 
 echo
 if [[ -d "${H}/.local/lib/ollama" ]]; then
@@ -112,5 +116,7 @@ echo "CLI:         ollama list | ollama pull qwen2.5:1.5b"
 echo "box:         distrobox enter ai-box"
 echo "WebUI:       ${WEBUI}  (systemctl --user start|stop open-webui.service)"
 echo "Decky:       plugin_loader.service (system). SteamOS updates can drop it — re-run install-decky.sh"
-echo "QAM:         restart Game Mode once if the plug icon is missing; enable bonsAI + decky-ollama"
+echo "QAM:         restart Game Mode once if the plug icon is missing; enable bonsAI + decky-ollama + Deck Focus"
+echo "Focus:       Game Mode → … → Decky → Deck Focus → Game focus / AI focus"
+echo "             or: deck game   /   deck ai-on"
 echo "Do not use bonsAI Install Ollama — use the Distrobox unit"
