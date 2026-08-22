@@ -31,6 +31,7 @@ deckusage() {
 }
 
 [[ -r "$HOME/.config/steamdeck/deck-help.bash" ]] && source "$HOME/.config/steamdeck/deck-help.bash"
+[[ -r "$HOME/.config/steamdeck/distrobox-in-box.bash" ]] && source "$HOME/.config/steamdeck/distrobox-in-box.bash"
 
 deckaudit() {
   bash "$HOME/.config/steamdeck/audit.sh"
@@ -40,27 +41,30 @@ deckbootstrap() {
   bash "$HOME/.config/steamdeck/bootstrap.sh" "$@"
 }
 
-deckbox() {
+_deck_enter_box() {
+  local name=${1:?}
+  shift
+  export PATH="/usr/bin:/bin:${HOME}/.local/bin:${PATH}"
+  if declare -F _steamdeck_in_distrobox >/dev/null 2>&1 && _steamdeck_in_distrobox; then
+    _steamdeck_distrobox enter "${name}" "$@"
+    return
+  fi
   local db="${HOME}/.local/bin/distrobox"
   [[ -x "${db}" ]] || db=$(command -v distrobox 2>/dev/null || true)
   [[ -n "${db}" ]] || { echo "distrobox not found — run: deck bootstrap" >&2; return 1; }
-  exec "${db}" enter arch-tools "$@"
+  exec "${db}" enter "${name}" "$@"
+}
+
+deckbox() {
+  _deck_enter_box arch-tools "$@"
 }
 
 deckboxai() {
-  local db="${HOME}/.local/bin/distrobox"
-  [[ -x "${db}" ]] || db=$(command -v distrobox 2>/dev/null || true)
-  [[ -n "${db}" ]] || { echo "distrobox not found — run: deck bootstrap" >&2; return 1; }
-  export PATH="/usr/bin:/bin:${HOME}/.local/bin:${PATH}"
-  exec "${db}" enter ai-box "$@"
+  _deck_enter_box ai-box "$@"
 }
 
 deckdev() {
-  local db="${HOME}/.local/bin/distrobox"
-  [[ -x "${db}" ]] || db=$(command -v distrobox 2>/dev/null || true)
-  [[ -n "${db}" ]] || { echo "distrobox not found — run: deck bootstrap" >&2; return 1; }
-  export PATH="/usr/bin:/bin:${HOME}/.local/bin:${PATH}"
-  exec "${db}" enter dev "$@"
+  _deck_enter_box dev "$@"
 }
 
 deckvscode() {

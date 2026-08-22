@@ -39,9 +39,9 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 | --- | --- | --- | --- |
 | This repo’s helpers (Deck copy) | `~/.config/steamdeck/` (real files, not Mac symlinks) | yes | `source ~/.bashrc` (already wired). Resync from Mac after edits. Includes `game-focus.sh` / `ai-focus.sh`. |
 | Mac control plane | `~/.config/steamdeck` → `/Users/wizops/DIPI/steam/helpers/` | n/a (Mac) | `source ~/.bashrc` then `deck …` |
-| Distrobox CLI | `~/.local/bin/distrobox` (1.8.2.5) | yes | `deck bootstrap` reinstalls if missing |
-| Distrobox `ai-box` | `archlinux:latest` container, `$HOME` storage | yes (container store in `$HOME`) | `deck box-ai` / `distrobox enter ai-box` |
-| Distrobox `dev` | `ubuntu:24.04` container, `$HOME` + `~/src` | yes (container store in `$HOME`) | `deck dev` / `deck box-dev` / `distrobox enter dev` |
+| Distrobox CLI | `~/.local/bin/distrobox` (1.8.2.5) — **host-only** (Podman is on the host) | yes | `deck bootstrap` reinstalls if missing. Inside a box: `distrobox ls` is proxied via `distrobox-host-exec`, or `exit` first. Do **not** install podman in the box. |
+| Distrobox `ai-box` | `archlinux:latest` container, `$HOME` storage | yes (container store in `$HOME`) | `deck box-ai` / `distrobox enter ai-box` (run on the **host**) |
+| Distrobox `dev` | `ubuntu:24.04` container, `$HOME` + `~/src` | yes (container store in `$HOME`) | `deck dev` / `deck box-dev` / `distrobox enter dev` (run on the **host**) |
 | VS Code | user Flatpak `com.visualstudio.code` + `~/.local/bin/code` | yes | Desktop **Visual Studio Code**, `code`, `deck vscode` |
 | Continue | `~/.continue/` → Ollama `127.0.0.1:11434` | yes | VS Code Continue pane (does not start Ollama) |
 | kubectl / helm | `~/.local/bin` (official static bins) | yes | on PATH in `dev` (shared `$HOME`) |
@@ -333,6 +333,8 @@ SteamOS host
 ```
 
 Project tree is host **`~/src`**. Distrobox bind-mounts `$HOME` — **no container copies** of source. Clone real repos as `~/src/<name>`.
+
+**Distrobox is host-only.** Create / list / enter / stop boxes from the SteamOS host (`distrobox ls`, `deck box-ai`, `deck dev`). `$HOME` is bind-mounted, so `~/.local/bin/distrobox` is visible **inside** `ai-box` / `dev`, but host `podman` is not — that is why a raw `distrobox ls` in the box used to say “install podman.” Do **not** install podman/docker/lilipod in the box. Interactive Deck shells source a helper that proxies `distrobox …` through `distrobox-host-exec` (or tells you to `exit` first). Open a **new** box shell after a helper resync, or `source ~/.config/steamdeck/deck-remote.bashrc`.
 
 ### Distrobox `dev`
 
@@ -721,6 +723,7 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | Leave Open WebUI / Jellyfin transcode / *arr up for AAA games | RAM + the 15W APU; QAM **Deck Focus → Game focus** or `deck game` first. |
 | Stop or recreate `ai-box` / Jellyfin / Ollama for `dev` work | They are independent. `dev` only shares `$HOME`. |
 | `apt install` VS Code / Cursor inside `dev` | Snap-heavy. Use host Desktop Cursor / VS Code and attach, or `distrobox-export`. |
+| Install podman/docker/lilipod inside `ai-box` / `dev` | Distrobox talks to **host** Podman. Inside a box, `distrobox ls` is proxied, or `exit` then run it on the host. |
 | Enable postgres / redis / localstack Quadlets by default | Surprise RAM on a handheld. Examples stay commented. |
 | Bind Ollama on `0.0.0.0` so Continue can “reach it from the Mac” | Use SSH `-L 11434` instead. |
 
@@ -742,5 +745,6 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | After SteamOS update | `deck bootstrap` → Decky `install-decky.sh` → restart Game Mode → `deck audit` |
 | After editing helpers | `rsync` `helpers/` → `deck@10.0.0.143:~/.config/steamdeck/` |
 | Compile / git / node / go | `deck dev` (or `deck box-dev`); projects in `~/src` |
+| List boxes from inside a box | `distrobox ls` (host-exec proxy) or `exit` first — do not install podman in the box |
 | Edit with local Ollama | Desktop **Visual Studio Code** / `deck vscode`; Continue → `127.0.0.1:11434` |
 | Install Protontricks / VC++ for a Proton game | `bash ~/.config/steamdeck/install-protontricks.sh`; then `protontricks -q <appid> vcrun2019` (§9) |

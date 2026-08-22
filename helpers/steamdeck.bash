@@ -31,6 +31,8 @@ deckping() {
 
 # shellcheck source=/dev/null
 [[ -r "${BASH_SOURCE[0]%/*}/deck-help.bash" ]] && source "${BASH_SOURCE[0]%/*}/deck-help.bash"
+# shellcheck source=/dev/null
+[[ -r "${BASH_SOURCE[0]%/*}/distrobox-in-box.bash" ]] && source "${BASH_SOURCE[0]%/*}/distrobox-in-box.bash"
 
 deck() {
   case "${1:-}" in
