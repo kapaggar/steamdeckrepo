@@ -50,6 +50,7 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 | `~/.local/bin/ollama` | Distrobox **wrapper** (must not be a host ELF) | yes | `ollama list` / `ollama pull …` |
 | Open WebUI | Quadlet `~/.config/containers/systemd/open-webui.container`; data `~/containers/open-webui` | yes | `deck webui start\|stop\|restart` |
 | Jellyfin | Quadlet `~/.config/containers/systemd/jellyfin.container`; config `~/containers/jellyfin/config`; media `~/media` | yes | `deck jellyfin start\|stop\|restart` |
+| Jellyfin Desktop | user Flatpak `org.jellyfin.JellyfinDesktop` 2.0.0 (client only) | yes | Desktop **Jellyfin**; Steam non-Steam **Jellyfin** (TV fullscreen) |
 | *arr (Radarr / Sonarr / Prowlarr / Bazarr) | Quadlets `~/.config/containers/systemd/{radarr,sonarr,prowlarr,bazarr}.container`; config `~/containers/<name>`; libraries `~/media/{movies,tv}` | yes | `deck arr` / `deck arr start\|stop\|restart` |
 | Podman user socket | `podman.socket` (user) | image binary; enable is user | `systemctl --user start\|stop podman.socket` |
 | User linger | `loginctl` linger for `deck` | usually yes; re-check | `sudo loginctl enable-linger deck` once |
@@ -103,7 +104,7 @@ Override from any Mac shell: `STEAMDECK_HOST`, `STEAMDECK_USER`, `STEAMDECK_SSH`
 | `127.0.0.1:11434` | Ollama | **localhost only** — not on the LAN |
 | `127.0.0.1:3000` | Open WebUI (pasta publishes host port) | **localhost only** |
 | `127.0.0.1:1337` | Decky PluginLoader | localhost |
-| `0.0.0.0:8096` | Jellyfin | LAN first-run wizard; media `~/media` |
+| `0.0.0.0:8096` | Jellyfin | LAN UI; media `~/media` |
 | `127.0.0.1:7878` | Radarr | **localhost only** — movies library manager |
 | `127.0.0.1:8989` | Sonarr | **localhost only** — TV library manager |
 | `127.0.0.1:9696` | Prowlarr | **localhost only** — indexer manager (you add indexers) |
@@ -273,7 +274,11 @@ First WebUI visit may ask you to create a **local** admin account. That stays on
 
 ### Jellyfin
 
-Manual Quadlet (`jellyfin.service`), not the official SteamOS installer (that script is interactive). First-run wizard: [http://127.0.0.1:8096](http://127.0.0.1:8096) on the Deck or [http://10.0.0.143:8096](http://10.0.0.143:8096) on the LAN. Libraries read `~/media` (mounted read-only). Game focus stops `jellyfin.service`; AI focus does not start it.
+Manual Quadlet (`jellyfin.service`), not the official SteamOS installer (that script is interactive; `~/src/jellyfin-on-steamOS` is a leftover clone only — do not re-run it). URLs: [http://127.0.0.1:8096](http://127.0.0.1:8096) on the Deck or [http://10.0.0.143:8096](http://10.0.0.143:8096) on the LAN. Libraries read `~/media` (mounted read-only). Game focus stops `jellyfin.service`; AI focus does not start it.
+
+**First-run wizard:** already completed on this Deck. Sign in at those URLs; no leftover admin wizard.
+
+**Gaming Mode client:** user Flatpak `org.jellyfin.JellyfinDesktop` 2.0.0. It is a client only — do **not** install `org.jellyfin.JellyfinServer`. Desktop **Jellyfin**; Steam library **Jellyfin** launches `--fullscreen --tv`. First client launch: add server `http://127.0.0.1:8096`.
 
 ### *arr library managers (localhost)
 
@@ -411,6 +416,7 @@ Switch to **Desktop Mode** for these. Game Mode can launch some of them via Stea
 | Visual Studio Code | yes | yes | `~/.local/bin/code` → user Flatpak; terminal **distrobox-dev** |
 | Google Chrome | yes (**our** launcher, not the Discover symlink) | yes | Flatpak Chrome + `--load-extension` (Open WebUI new tab) |
 | Open WebUI | yes | yes | `~/.local/bin/google-chrome http://127.0.0.1:3000` |
+| Jellyfin | yes | yes | user Flatpak `org.jellyfin.JellyfinDesktop` → Quadlet `:8096` |
 | RetroArch | yes (Flatpak, not Steam) | yes (`RetroArch.desktop`) | `flatpak run org.libretro.RetroArch` |
 | ES-DE | yes | yes | `…/Emulation/tools/launchers/es-de/es-de.sh` → `~/Applications/ES-DE.AppImage` |
 

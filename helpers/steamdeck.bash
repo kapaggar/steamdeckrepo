@@ -395,7 +395,7 @@ deckjellyfin() {
       _deck_ssh "journalctl --user -u jellyfin.service -n ${1:-80} --no-pager"
       ;;
     *)
-      echo "Jellyfin  http://127.0.0.1:8096  and  http://10.0.0.143:8096  (first-run wizard; media ~/media)"
+      echo "Jellyfin  http://127.0.0.1:8096  and  http://10.0.0.143:8096  (media ~/media)"
       _deck_ssh "systemctl --user --no-pager -l status jellyfin.service | head -16"
       ;;
   esac
