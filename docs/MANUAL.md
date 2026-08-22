@@ -2,7 +2,7 @@
 
 Owner guide for **सत्यBrave**. This is the single document for everything added on top of a **stock SteamOS** image on this Deck.
 
-**Last verified:** 2026-08-21, live SSH to `deck@10.0.0.143` (Distrobox `dev` + host VS Code Flatpak + Continue). Hardware is **Galileo** (OLED). SteamOS **3.8.16** (`BUILD_ID=20260716.1`, branch `stable`, `steamos-readonly` **enabled**).
+**Last verified:** 2026-08-22, live SSH to `deck@10.0.0.143` (Flatpak RetroArch + official ES-DE AppImage). Hardware is **Galileo** (OLED). SteamOS **3.8.16** (`BUILD_ID=20260716.1`, branch `stable`, `steamos-readonly` **enabled**).
 
 Related short notes: [architecture.md](architecture.md) (layout only) and the [repo README](../README.md) (Mac helpers). This manual is the operator book.
 
@@ -66,10 +66,12 @@ Survive column: **yes** = under `$HOME` or user Flatpak store. **re-check** = `/
 | Firefox Flatpak | `org.mozilla.firefox` **system** (154.0) | typically yes | Discover / app menu (http(s) is **not** the default) |
 | `xdg-open` wrapper | `~/.local/bin/xdg-open` → Chrome for `http(s)` | yes | used by Cursor / login flows |
 | EmuDeck AppImage | `~/Applications/EmuDeck.AppImage` + `~/.local/bin/emudeck` | yes | Desktop **EmuDeck** |
+| ES-DE AppImage | `~/Applications/ES-DE.AppImage` (official 3.4.1 Steam Deck build) | yes | Desktop **ES-DE**; Steam **EmulationStationDE** |
+| Live ROM tree | `~/Downloads/emulatorom/Emulation` (not the empty `~/Emulation` stub) | yes | ES-DE / EmuDeck launchers |
 | Emulator AppImages | `~/Applications/*.AppImage` (see §8) | yes | matching `.desktop` launchers |
 | EmuDeck Flatpaks | user Flatpaks (Dolphin, PPSSPP, melonDS, …) | yes | Discover / Steam ROM Manager |
-| Steam RetroArch | `~/.steam/steam/steamapps/common/RetroArch` | yes | Steam library (stock-style install) |
-| Flatpak RetroArch | `org.libretro.RetroArch` (user, 1.22.2) | yes | EmuDeck / Discover — **not** the Steam one |
+| Steam RetroArch | leftover `~/.steam/steam/steamapps/common/RetroArch` (~804 MB, app 1118310) | yes | Steam library only — **not** wired to EmuDeck |
+| Flatpak RetroArch | `org.libretro.RetroArch` (user, 1.22.2) | yes | EmuDeck launchers + Desktop **RetroArch** |
 | Gyro DSU | `~/sdgyrodsu/` + user `sdgyrodsu.service` | yes | `systemctl --user start\|stop sdgyrodsu`; Desktop update/uninstall helpers |
 | Protontricks | user Flatpak `com.github.Matoking.protontricks` 1.14.1 + `~/.local/bin/protontricks` | yes | `protontricks -l` / `bash ~/.config/steamdeck/install-protontricks.sh` |
 | Passwordless sudo | `/etc/sudoers.d/zz-deck-nopasswd` | **re-check** | must sort **after** `wheel` |
@@ -409,8 +411,10 @@ Switch to **Desktop Mode** for these. Game Mode can launch some of them via Stea
 | Visual Studio Code | yes | yes | `~/.local/bin/code` → user Flatpak; terminal **distrobox-dev** |
 | Google Chrome | yes (**our** launcher, not the Discover symlink) | yes | Flatpak Chrome + `--load-extension` (Open WebUI new tab) |
 | Open WebUI | yes | yes | `~/.local/bin/google-chrome http://127.0.0.1:3000` |
+| RetroArch | yes (Flatpak, not Steam) | yes (`RetroArch.desktop`) | `flatpak run org.libretro.RetroArch` |
+| ES-DE | yes | yes | `…/Emulation/tools/launchers/es-de/es-de.sh` → `~/Applications/ES-DE.AppImage` |
 
-Also on the Desktop (stock or EmuDeck): **Return to Gaming Mode**, **Steam**, **Konsole**, **EmuDeck**, leftover **Install EmuDeck**, GyroDSU update/uninstall.
+Also on the Desktop (stock or EmuDeck): **Return to Gaming Mode**, **Steam**, **Konsole**, **EmuDeck**, leftover **Install EmuDeck**, **RetroArch** (Flatpak), **ES-DE**, GyroDSU update/uninstall.
 
 ### Browsers
 
@@ -457,6 +461,7 @@ agent status
 | --- | --- |
 | `~/Applications/cursor/Cursor-3.16.29-x86_64.AppImage` | Cursor IDE (extracted to `squashfs-root` so Steam’s reaper does not eat a FUSE AppImage) |
 | `~/Applications/EmuDeck.AppImage` | EmuDeck manager |
+| `~/Applications/ES-DE.AppImage` | official ES-DE Steam Deck frontend 3.4.1 |
 | `~/Applications/Cemu.AppImage` | Wii U |
 | `~/Applications/DuckStation.AppImage` | PS1 |
 | `~/Applications/pcsx2-Qt.AppImage` | PS2 |
@@ -476,23 +481,29 @@ agent status
 
 ## 8. Emulation (legal dumps only)
 
-Two stacks exist. They are **not** the same RetroArch.
+Two RetroArch installs exist. They are **not** the same binary. **EmuDeck uses the Flatpak.**
 
 | Stack | What it is | Use |
 | --- | --- | --- |
-| **Steam RetroArch** | Already in the Steam library: `~/.steam/steam/steamapps/common/RetroArch` | Steam-managed cores; launch from Game Mode like any Steam app. |
-| **EmuDeck** | AppImage + `~/Emulation/{roms,bios,saves,storage,tools,hdpacks}` + Steam ROM Manager + extra emulators | Front-end / per-system emulators. ROMs you place yourself. |
+| **Flatpak RetroArch** | user `org.libretro.RetroArch` 1.22.2; 93 cores; host+network override | EmuDeck `retroarch.sh` and Desktop **RetroArch**. |
+| **Steam RetroArch** | leftover `steamapps/common/RetroArch` (~804 MB, app 1118310) | Steam library only. Left installed; does not block EmuDeck. |
+| **EmuDeck** | AppImage + standalones in `~/Applications` + user Flatpaks | Manager + per-system emulators. |
+| **ES-DE** | official Steam Deck AppImage `~/Applications/ES-DE.AppImage` (3.4.1) | Game Mode **EmulationStationDE**; Desktop **ES-DE**. No official Flatpak (upstream dropped it on SteamOS). |
 
-EmuDeck also installed **user Flatpaks** (Dolphin, PrimeHack, melonDS, PPSSPP, ScummVM, xemu, Supermodel, Flatpak RetroArch) and Desktop launchers (Cemu, DuckStation, PCSX2, RPCS3, Azahar, ShadPS4, Vita3K, Ryujinx, Xenia, Steam ROM Manager, Model 2 via Proton). **Gyro DSU** (`sdgyrodsu.service`) exposes the Deck gyro to emulators that speak cemuhook/DSU.
+**Live tree** is `~/Downloads/emulatorom/Emulation/{roms,bios,saves,storage,tools}`. `~/Emulation` is an empty first-run stub (0 ROM files). Do not wipe or “migrate” the live tree onto the stub. EmuDeck `settings.sh` already points `emulationPath` / `romsPath` / `biosPath` at the live tree. Flatpak RetroArch `rgui_browser_directory` / `system_directory` do too.
+
+EmuDeck also installed **user Flatpaks** (Dolphin, PrimeHack, melonDS, PPSSPP, ScummVM, xemu, Supermodel) and Desktop launchers (Cemu, DuckStation, PCSX2, RPCS3, Azahar, ShadPS4, Vita3K, Ryujinx, Xenia, Steam ROM Manager, Model 2 via Proton). **Gyro DSU** (`sdgyrodsu.service`) exposes the Deck gyro to emulators that speak cemuhook/DSU.
 
 **Legal only.** Use dumps and BIOS you are allowed to have (your own hardware, licensed archives, or files the emulator’s authors say you may redistribute). This manual will not list ROM sites, “all-in-one” packs, or SteamRIP-style installers. Do not ask the helpers to fetch copyrighted BIOS/ROMs.
 
 Typical owner workflow:
 
-1. Put **your** dumps in the matching folder under `~/Emulation/roms/<system>/`.
-2. Put **your** BIOS in `~/Emulation/bios/` when a system requires it (see that emulator’s official docs).
-3. Run **EmuDeck** or **Steam ROM Manager** to refresh Game Mode tiles.
-4. Prefer **Steam RetroArch** if you already configured it in Steam; use EmuDeck when you want the per-system AppImages/Flatpaks.
+1. Put **your** dumps in `~/Downloads/emulatorom/Emulation/roms/<system>/`.
+2. Put **your** BIOS in `~/Downloads/emulatorom/Emulation/bios/` when a system requires it (that emulator’s official docs).
+3. Game Mode: **EmulationStationDE**. Desktop: **ES-DE** or **EmuDeck**.
+4. Steam ROM Manager parse is still a **Desktop tap** if you want per-game Steam tiles (`doSetupSRM=false` from first-run). Restart Game Mode once after adding the ES-DE AppImage so the existing shortcut actually launches.
+
+If Steam rewrites `~/.local/share/applications/RetroArch.desktop` back to `steam://rungameid/1118310`, use the Desktop **RetroArch** icon (Flatpak) or `flatpak run org.libretro.RetroArch`.
 
 ---
 
@@ -542,7 +553,7 @@ From the Mac: `deck protontricks -q 1243830 vcrun2019`. Extra library on an SD c
 | --- | --- | --- |
 | `/usr` | **Wiped / replaced** on image update | Anything installed with `pacman` on the host |
 | `/etc` | **Can be reset** | `plugin_loader.service`, `zz-deck-nopasswd` — re-check |
-| `$HOME` | **Keeps** | `~/.local`, `~/.config`, `~/.ollama`, `~/Applications`, `~/containers`, `~/homebrew`, `~/Emulation`, `~/src`, Steam library, `~/.grok` |
+| `$HOME` | **Keeps** | `~/.local`, `~/.config`, `~/.ollama`, `~/Applications`, `~/containers`, `~/homebrew`, `~/Downloads/emulatorom/Emulation` (live ROMs), `~/Emulation` (empty stub), `~/src`, Steam library, `~/.grok` |
 | User Flatpaks | **Keeps** | EmuDeck emulators |
 | System Flatpaks | **Usually keeps** (`/var`) | Chrome, Firefox — still confirm after a big SteamOS jump |
 | Distrobox / Podman storage | **Keeps** (`~/.local/share/containers`) | `ai-box`, `dev`, Open WebUI / *arr image layers |
