@@ -4,7 +4,7 @@ Owner guide for **सत्यBrave**. This is the single document for everythin
 
 **Last verified:** 2026-08-22, live SSH to `deck@10.0.0.143` (Flatpak RetroArch + official ES-DE AppImage). Hardware is **Galileo** (OLED). SteamOS **3.8.16** (`BUILD_ID=20260716.1`, branch `stable`, `steamos-readonly` **enabled**).
 
-Related short notes: [architecture.md](architecture.md) (layout only) and the [repo README](../README.md) (Mac helpers). This manual is the operator book.
+Related short notes: [architecture.md](architecture.md) (layout only), [windows-game-transfer.md](windows-game-transfer.md) (pack Windows `steamapps` + `.acf` for this Deck), and the [repo README](../README.md) (Mac helpers). This manual is the operator book.
 
 No passwords, API keys, or SSH private keys are stored in this repo.
 
@@ -189,6 +189,8 @@ deckpullsaves [DIR]              # default ~/Backups/steamdeck-saves
 deckpushsaves [DIR]
 deckscreenshots [DIR]
 ```
+
+Windows PC libraries are a different source. Pack `steamapps/common/<Game>/` plus `steamapps/appmanifest_<appid>.acf` on the PC (USB, Steam LAN transfer, or a GUI packer), then merge onto this Deck or stage the pack on the Mac and `deckpushgame 'Folder Name' /path/to/steamapps`. Full procedure: [windows-game-transfer.md](windows-game-transfer.md).
 
 ### Remote CLIs
 
@@ -519,7 +521,7 @@ If Steam rewrites `~/.local/share/applications/RetroArch.desktop` back to `steam
 
 Windows titles on SteamOS run under **Proton**. Valve’s layer already includes **DXVK** (Direct3D) and a `d3dcompiler`. You almost never need Microsoft’s DirectX web installer (`dxwebsetup.exe`). What *does* sometimes go missing is a **Visual C++** runtime inside that game’s Wine prefix.
 
-**Do not** copy a Windows dump / `_CommonRedist` / `setup.exe` / Steam-emulator DLLs onto the Deck. A real Steam library export is `steamapps/common/<Game>/` plus `steamapps/appmanifest_<appid>.acf`. Push that with `deckpushgame` from a Mac Steam library, then on the Deck tap **Install** (Steam verifies existing files). Loose folders without an acf are not imports. Then, if a prefix is missing a runtime, apply the matching **winetricks** verb with Protontricks.
+**Do not** copy a Windows dump / `_CommonRedist` / `setup.exe` / Steam-emulator DLLs onto the Deck. A real Steam library export is `steamapps/common/<Game>/` plus `steamapps/appmanifest_<appid>.acf`. From a Mac Steam library, push with `deckpushgame`. From a Windows PC, pack those two pieces and land them as in [windows-game-transfer.md](windows-game-transfer.md). Then on the Deck tap **Install** (Steam verifies existing files). Loose folders without an acf are not imports. Then, if a prefix is missing a runtime, apply the matching **winetricks** verb with Protontricks.
 
 Protontricks is the **user Flatpak** `com.github.Matoking.protontricks` (Discover / Flathub — official install path for Steam Deck). That lives under `$HOME` and does **not** need `steamos-readonly disable`. Wrappers: `~/.local/bin/protontricks` and `protontricks-launch`. Reinstall/repair:
 
@@ -748,3 +750,4 @@ sudo chmod 440 /etc/sudoers.d/zz-deck-nopasswd
 | List boxes from inside a box | `distrobox ls` (host-exec proxy) or `exit` first — do not install podman in the box |
 | Edit with local Ollama | Desktop **Visual Studio Code** / `deck vscode`; Continue → `127.0.0.1:11434` |
 | Install Protontricks / VC++ for a Proton game | `bash ~/.config/steamdeck/install-protontricks.sh`; then `protontricks -q <appid> vcrun2019` (§9) |
+| Pack Windows Steam games onto this Deck | [windows-game-transfer.md](windows-game-transfer.md); or `deckpushgame` from a staged `steamapps` |

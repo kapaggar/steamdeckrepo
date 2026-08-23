@@ -5,7 +5,7 @@ This repo is **not** DIPI Staff Android — it only holds Deck helpers, bootstra
 
 Canonical tree is this repository. On the Mac, `~/.config/steamdeck/*` are symlinks into `helpers/` so existing `source ~/.config/steamdeck/steamdeck.bash` keeps working.
 
-Owner-facing operator manual (stock SteamOS vs everything added, inventory, AI stack, daily ops, recovery): [docs/MANUAL.md](docs/MANUAL.md). Architecture notes stay in [docs/architecture.md](docs/architecture.md).
+Owner-facing operator manual (stock SteamOS vs everything added, inventory, AI stack, daily ops, recovery): [docs/MANUAL.md](docs/MANUAL.md). Windows Steam library packing → this Deck: [docs/windows-game-transfer.md](docs/windows-game-transfer.md). Architecture notes stay in [docs/architecture.md](docs/architecture.md).
 
 ## Layout
 
@@ -28,6 +28,7 @@ helpers/                 Mac + Deck scripts
   chrome-open-webui-newtab/     unpacked MV3 extension source
 plugins/deck-focus/      Decky QAM plugin (Game focus / AI focus)
 docs/architecture.md     $HOME-first, Distrobox, Ollama, Decky, Open WebUI
+docs/windows-game-transfer.md  Pack Windows steamapps + acf for this Deck
 ```
 
 ## Mac setup
