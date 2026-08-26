@@ -1,0 +1,14 @@
+# Steam Deck / Linux launcher template.
+# After install this is copied to ~/Desktop/dipi-staff.desktop on the Deck.
+# This is not a macOS file — it will not appear on a Mac desktop.
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=DIPI Staff
+Comment=Registrar desk for dipi.vridhamma.org
+Exec=dipi-staff --windowed
+Icon=dipi-staff
+Terminal=false
+StartupNotify=true
+Categories=Office;
+StartupWMClass=org-dhamma-dipi-staff-desktop-MainKt

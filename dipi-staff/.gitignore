@@ -1,0 +1,16 @@
+.gradle/
+build/
+**/build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+.cxx/
+*.apk
+*.ap_
+*.dex
+.superpowers/
+.kotlin/
+desktop/dist/
+*.hprof

@@ -1,7 +1,7 @@
 # Steam Deck OLED helpers
 
 Mac-managed tooling for a Steam Deck OLED on the LAN (`deck@10.0.0.143`).
-This repo is **not** DIPI Staff Android — it only holds Deck helpers, bootstrap, and local-AI layout notes.
+This repo holds Deck helpers, bootstrap, and local-AI layout notes. The native Linux DIPI Staff desktop client (moved off `dipi-app` `cursor/linux-steam-deck-334f`) lives in [dipi-staff/](dipi-staff/). Deck install notes: [dipi-staff/docs/STEAM-DECK.md](dipi-staff/docs/STEAM-DECK.md).
 
 Canonical tree is this repository. On the Mac, `~/.config/steamdeck/*` are symlinks into `helpers/` so existing `source ~/.config/steamdeck/steamdeck.bash` keeps working.
 
@@ -29,6 +29,7 @@ helpers/                 Mac + Deck scripts
 plugins/deck-focus/      Decky QAM plugin (Game focus / AI focus)
 docs/architecture.md     $HOME-first, Distrobox, Ollama, Decky, Open WebUI
 docs/windows-game-transfer.md  Pack Windows steamapps + acf for this Deck
+dipi-staff/              Native Compose Desktop DIPI Staff client (Steam Deck OLED)
 ```
 
 ## Mac setup

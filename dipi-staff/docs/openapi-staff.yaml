@@ -1,0 +1,408 @@
+openapi: 3.0.3
+info:
+  title: DIPI Staff API (Vertical 1)
+  version: 0.2.0
+  description: |
+    Contract for DIPI Staff Android. This file matches
+    docs/DIPI-STAFF-IMPLEMENTATION-PROMPT-GROK-4.6.md (2026-08-13).
+
+    Status writes go to existing Drupal `/change-status/{id}` — no /staff façade.
+    No attendance write in v1. Server URL is a build-time constant, not a path param.
+    Reads that do not exist as JSON are new `/staff` routes (mock-first).
+
+    Do not scrape /search-app. Do not use APP API / get-app-detail.
+servers:
+  - url: https://dipi.vridhamma.org
+    description: Fixed production host (BuildConfig.BASE_URL). Debug may override via Gradle property.
+
+paths:
+  /api/user/login:
+    post:
+      operationId: login
+      summary: Drupal Services staff login
+      x-todo-server: POST /api/user/login (existing)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Session cookie set; token is CSRF
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sessid, session_name, token, user]
+                properties:
+                  sessid: { type: string }
+                  session_name: { type: string }
+                  token: { type: string }
+                  user:
+                    type: object
+                    properties:
+                      uid: { type: integer }
+                      name: { type: string }
+
+  /api/user/logout:
+    post:
+      operationId: logout
+      x-todo-server: POST /api/user/logout (existing)
+      responses:
+        '200': { description: Logged out }
+
+  /services/session/token:
+    get:
+      operationId: csrfToken
+      x-todo-server: existing Services token
+      responses:
+        '200':
+          description: CSRF token string
+          content:
+            text/plain:
+              schema: { type: string }
+
+  /change-status/{applicantId}:
+    get:
+      operationId: changeStatusGet
+      description: Existing desk JSON. Prefer POST.
+      x-todo-server: _change_status
+      parameters:
+        - $ref: '#/components/parameters/applicantId'
+        - name: s
+          in: query
+          required: true
+          schema: { type: string }
+        - name: l
+          in: query
+          schema: { type: integer, default: 0 }
+        - name: c
+          in: query
+          schema: { type: string, default: '' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StatusChangeResult' }
+    post:
+      operationId: changeStatus
+      description: |
+        Canonical status write. Query params s, l, c (l=0 in v1).
+        Never send s=Approved from the app.
+      x-todo-server: _change_status
+      parameters:
+        - $ref: '#/components/parameters/applicantId'
+        - name: s
+          in: query
+          required: true
+          schema: { type: string }
+        - name: l
+          in: query
+          schema: { type: integer, default: 0 }
+        - name: c
+          in: query
+          schema: { type: string, default: '' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StatusChangeResult' }
+
+  /staff/session:
+    get:
+      operationId: getSession
+      x-todo-server: users + dh_user_center + variable_get mode_test
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Session' }
+
+  /staff/centres/{centreId}/courses:
+    get:
+      operationId: listCourses
+      x-todo-server: dh_course where c_finalized=0 and c_deleted=0
+      parameters:
+        - $ref: '#/components/parameters/centreId'
+        - name: upcoming
+          in: query
+          schema: { type: boolean, default: true }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Course' }
+
+  /staff/courses/{courseId}/applicants:
+    get:
+      operationId: listApplicants
+      description: Whitelisted public fields + status counts. Never ae_* or national IDs.
+      x-todo-server: search.inc WHERE + whitelist SELECT
+      parameters:
+        - $ref: '#/components/parameters/courseId'
+        - name: status
+          in: query
+          description: Repeatable; omit or empty = all
+          schema: { type: string }
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApplicantList' }
+
+  /staff/applicants/{applicantId}:
+    get:
+      operationId: getApplicant
+      x-todo-server: dh_applicant public columns + dh_applicant_course history + server flags
+      parameters:
+        - $ref: '#/components/parameters/applicantId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApplicantCard' }
+
+  /staff/meta/statuses:
+    get:
+      operationId: listStatuses
+      x-todo-server: dh_type_detail COURSE-SYSTEM-STATUS / COURSE-STATUS
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [value]
+                      properties:
+                        key: { type: string }
+                        value: { type: string }
+
+  /staff/applicants/{applicantId}/photo:
+    get:
+      operationId: getPhoto
+      x-todo-server: a_photo S3 stream
+      parameters:
+        - $ref: '#/components/parameters/applicantId'
+      responses:
+        '200':
+          description: Image bytes
+          content:
+            image/jpeg:
+              schema: { type: string, format: binary }
+        '404': { description: No photo }
+
+  /staff/courses/{courseId}/photo-review:
+    get:
+      operationId: photoReview
+      x-todo-server: new suggestion classes per applicant
+      parameters:
+        - $ref: '#/components/parameters/courseId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PhotoReviewList' }
+
+  /staff/applicants/{applicantId}/photo:
+    post:
+      operationId: uploadPhotoCorrection
+      description: Geometry only. Server resubmits application with swapped photo and reports drift.
+      x-todo-server: new; reuses application save path
+      parameters:
+        - $ref: '#/components/parameters/applicantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rotate]
+              properties:
+                rotate: { type: integer, description: Degrees clockwise }
+                crop:
+                  type: object
+                  properties:
+                    l: { type: number }
+                    t: { type: number }
+                    r: { type: number }
+                    b: { type: number }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean }
+                  driftedFields:
+                    type: array
+                    items: { type: string }
+                  message: { type: string }
+
+components:
+  parameters:
+    centreId:
+      name: centreId
+      in: path
+      required: true
+      schema: { type: integer }
+    courseId:
+      name: courseId
+      in: path
+      required: true
+      schema: { type: integer }
+    applicantId:
+      name: applicantId
+      in: path
+      required: true
+      schema: { type: integer }
+
+  schemas:
+    Session:
+      type: object
+      required: [uid, name, displayName, centres, modeTest]
+      properties:
+        uid: { type: integer }
+        name: { type: string }
+        displayName: { type: string }
+        centres:
+          type: array
+          items: { $ref: '#/components/schemas/Centre' }
+        modeTest: { type: boolean }
+
+    Centre:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+
+    Course:
+      type: object
+      required: [id, centreId, name]
+      properties:
+        id: { type: integer }
+        centreId: { type: integer }
+        name: { type: string }
+        start: { type: string, format: date }
+        end: { type: string, format: date }
+        typeKey: { type: string }
+
+    ApplicantList:
+      type: object
+      required: [items, counts]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ApplicantCard' }
+        nextCursor: { type: string, nullable: true }
+        counts:
+          type: object
+          additionalProperties: { type: integer }
+
+    ApplicantHistory:
+      type: object
+      properties:
+        first: { type: string }
+        recent: { type: string }
+        counts:
+          type: array
+          items:
+            type: object
+            required: [label, n]
+            properties:
+              label: { type: string }
+              n: { type: integer }
+
+    AuditFlag:
+      type: object
+      required: [severity, label, detail, ruleId]
+      properties:
+        severity: { type: string, enum: [HARD, SAFETY, SOFT] }
+        label: { type: string }
+        detail: { type: string }
+        ruleId: { type: string }
+
+    ApplicantCard:
+      type: object
+      required: [id, centreId, courseId, givenName, familyName, gender, status, type, oldStudent, attended]
+      properties:
+        id: { type: integer }
+        centreId: { type: integer }
+        courseId: { type: integer }
+        givenName: { type: string }
+        middleName: { type: string }
+        familyName: { type: string }
+        gender: { type: string, enum: [M, F] }
+        status: { type: string }
+        type: { type: string, enum: [Student, Sevak] }
+        oldStudent: { type: boolean }
+        attended: { type: boolean }
+        confNo: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        mobile: { type: string, nullable: true }
+        phoneHome: { type: string, nullable: true }
+        city: { type: string, nullable: true }
+        state: { type: string, nullable: true }
+        country: { type: string, nullable: true }
+        dob: { type: string, nullable: true }
+        age: { type: integer, nullable: true }
+        monk: { type: boolean }
+        createdAt: { type: string }
+        photoUrl: { type: string, nullable: true }
+        emergencyPresent: { type: boolean }
+        history: { $ref: '#/components/schemas/ApplicantHistory' }
+        flags:
+          type: array
+          items: { $ref: '#/components/schemas/AuditFlag' }
+
+    PhotoReviewItem:
+      type: object
+      required: [applicantId, kind]
+      properties:
+        applicantId: { type: integer }
+        kind: { type: string, enum: [good, suggest, auto, nofel, fixed] }
+        badge: { type: string }
+        suggestedRotate: { type: integer }
+        suggestedCrop: { type: boolean }
+
+    PhotoReviewList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PhotoReviewItem' }
+
+    StatusChangeResult:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, description: OK or Failed }
+        msg: { type: string }
+        confno: { type: string }
+        newstatus: { type: string }
